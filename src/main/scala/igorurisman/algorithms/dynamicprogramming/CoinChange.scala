@@ -32,7 +32,7 @@ object CoinChange extends App {
    *
    *   In the general case, the value in the cell C(i,j) is equal to the number of ways
    *   change can be given for the amount j using the coin set {d1...di}. It can be
-   *   computed using the following key recurrent relationship:
+   *   computed using the following key recurrence relation:
    *
    *   C(i, j) = C(i-1, j) + C(i, j-di)
 
@@ -100,7 +100,7 @@ object CoinChange extends App {
    *
    *   In the general case, the value in the cell C(i,j) is equal to the minimum number
    *   of coins needed to give change for the amount j using the coin set {d1...di}.
-   *   It can be computed using the following key recurrent relationship:
+   *   It can be computed using the following key recurrence relation:
    *
    *   C(i, j) = min (C(i-1, j), C(i, j-di) + 1)
 
