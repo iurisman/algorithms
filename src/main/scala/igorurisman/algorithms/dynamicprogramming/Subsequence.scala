@@ -8,11 +8,11 @@ object Subsequence {
   def lisLen[T](seq: Seq[T])(implicit ordering: Ordering[T]): Int = {
     val memo = Array.fill(seq.length)(1)
     for {
-      (currentElem, currElemIx) <- seq.zipWithIndex
-      (precedingElem, precedingElemIx) <- seq.take(currElemIx).zipWithIndex
+      i <- 0 until seq.length
+      j <- 0 until i
     } {
-      if (ordering.lt(precedingElem, currentElem)) {
-        memo(currElemIx) = memo(currElemIx).max(1 + memo(precedingElemIx))
+      if(ordering.lt(seq(j), seq(i))) {
+        memo(i) = memo(i).max(1 + memo(j))
       }
     }
     memo.max

@@ -30,7 +30,7 @@ class SubsequenceTest extends AnyWordSpec with Matchers {
       )(Ordering.by[String, Int](_.toInt)) mustBe 5
 
       val start = Instant.now
-      Subsequence.lis(Array.fill(100000)(Random.nextInt()))
+      Subsequence.lisLen(Array.fill(100000)(Random.nextInt()))
       println(Duration.between(start, Instant.now))
     }
   }
