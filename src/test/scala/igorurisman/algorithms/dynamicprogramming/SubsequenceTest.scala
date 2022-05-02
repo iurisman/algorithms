@@ -8,7 +8,6 @@ import scala.util.Random
 
 class SubsequenceTest extends AnyWordSpec with Matchers {
 
-
   s"$Subsequence" should {
 
     "compute the length of longest increasing subsequence" in {
@@ -29,9 +28,9 @@ class SubsequenceTest extends AnyWordSpec with Matchers {
         Seq("1", "2", "8", "30", "77")
       )(Ordering.by[String, Int](_.toInt)) mustBe 5
 
-      val start = Instant.now
-      Subsequence.lisLen(Array.fill(100000)(Random.nextInt()))
-      println(Duration.between(start, Instant.now))
+      val rand = new Random(0)
+      Subsequence.lisLen(Array.fill(10000)(rand.nextInt(1000))) mustBe 180
+
     }
   }
 }
