@@ -50,27 +50,25 @@ object CoinChange extends App {
    *
    *  The goal is to get to the bottom-right column, which will contain the number of
    *  ways to give change for 5 with the coin set {1,2,5}.
+   *
+   *  In practice, it's not necessary to memoize the entire table; keeping just the
+   *  current row will suffice. We will make repeated passes over this array,
+   *  starting with the key subset {d1} and ending with the full key set {d1,...,dk}.
    */
   def ways(amount: Int, coins: Array[Int]): Long = {
 
     val coinsSorted = coins.sorted
-    val (rows, columns) = (coins.length + 1, amount + 1)
+    val memo = Array(1L) ++ Array.fill(amount)(0L)
 
-    // Setup the table
-    val table = Array.ofDim[Long](rows, columns)
-    for (i <- 0 until rows) table(i)(0) = 1
-    for (j <- 1 until columns) table(0)(j) = 0
-
-    // Fill in the table
-    for {
-      i <- 1 until rows
-      j <- 1 until columns
-    } {
-      val coins = coinsSorted.take(i)
-      table(i)(j) = table(i - 1)(j) + (if (coins.last > j) 0 else table(i)(j - coins.last))
+    for (i <- 1 to coinsSorted.size) {
+      val subset = coinsSorted.take(i)
+      for (j <- 1 to amount) {
+        memo(j) += (if (subset.last > j) 0 else memo(j - subset.last))
+      }
     }
 
-    table(rows - 1)(columns - 1)
+
+    memo.last
   }
 
   /**
@@ -118,34 +116,34 @@ object CoinChange extends App {
    *
    *  The goal is to get to the bottom-right column, which will contain the minimum number
    *  of coins required to give change for 5 with the coin set {1,2,5}.
+   *
+   *  In practice, it's not necessary to memoize the entire table; keeping just the
+   *  current row will suffice. We will make repeated passes over this array,
+   *  starting with the key subset {d1} and ending with the full key set {d1,...,dk}.
    */
 
   def minCoins(amount: Int, coins: Array[Int]): Option[Int] = {
 
     val coinsSorted = coins.sorted
-    val (rows, columns) = (coins.length + 1, amount + 1)
     val Inf = Int.MaxValue
+    val memo = Array(0) ++ Array.fill(amount)(Inf)
 
-    // Setup the table
-    val table = Array.ofDim[Int](rows, columns)
-    for (i <- 0 until rows) table(i)(0) = 0
-    for (j <- 1 until columns) table(0)(j) = Inf
-
-    // Fill in the table
-    for {
-      i <- 1 until rows
-      j <- 1 until columns
-    } {
-      val coins = coinsSorted.take(i)
-      table(i)(j) = table(i - 1)(j).min {
-        if (coins.last > j || table(i)(j - coins.last) == Inf) Inf
-        else table(i)(j - coins.last) + 1
+    for (i <- 1 to coinsSorted.size) {
+      val subset = coinsSorted.take(i)
+      for (j <- 1 to amount) {
+        memo(j) = memo(j).min {
+          if (subset.last > j || memo(j - subset.last) == Inf) {
+            Inf
+          } else {
+            memo(j - subset.last) + 1
+          }
+        }
       }
     }
 
-    table(rows - 1)(columns - 1) match {
+    memo(amount) match {
       case 0 | Inf => None
-      case res => Some(res)
+      case _ => Some(amount)
     }
   }
 }
