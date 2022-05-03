@@ -30,19 +30,19 @@ object Subsequence {
    *  5 1  1 2 2 3 4 3
    *  5 2  1 2 2 3 4 3
    *  5 3  1 2 2 3 4 4
-   *  5 4  1 2 2 3 4 5
+   *  5 4  1 2 2 3 4 4
    */
   def lisLen[T](seq: Seq[T])(implicit ordering: Ordering[T]): Int = {
-    val memo = Array.fill(seq.length)(1)
+    val length = Array.fill(seq.length)(1)
     for {
       i <- 0 until seq.length
       j <- 0 until i
     } {
       if (ordering.lt(seq(j), seq(i))) {
-        memo(i) = memo(i).max(1 + memo(j))
+        length(i) = length(i).max(1 + length(j))
       }
     }
-    memo.max
+    length.max
   }
 
   /**
@@ -51,18 +51,31 @@ object Subsequence {
    * whenever we increment Memo(i)
    */
   def lis[T](seq: Seq[T])(implicit ordering: Ordering[T]): Seq[T] = {
-    val memo = Array.fill(seq.length)(1)
-    val result = scala.collection.mutable.ArrayBuffer.empty[T]
+
+    val length = Array.fill(seq.length)(1)
+    val prevIx = new Array[Int](seq.length)
 
     for {
       i <- 0 until seq.length
       j <- 0 until i
     } {
-      if (ordering.lt(seq(j), seq(i)) && memo(i) < memo(j) + 1) {
-        result += seq(j)
-        memo(i) = 1 + memo(j)
+      if (ordering.lt(seq(j), seq(i)) && length(i) < length(j) + 1) {
+        length(i) = length(j) + 1
+        prevIx(i) = j
       }
     }
+
+    // The index of the max length.
+    val maxIx = length.zipWithIndex.maxBy(_._1)._2
+
+    // Reconstruct the max subseq by walking back the prevIx array.
+    val result = collection.mutable.ListBuffer[T](seq(maxIx))
+    var ix = maxIx
+    while (ix > 0) {
+      ix = prevIx(ix)
+      seq(ix) +=: result
+    }
+
     result.toSeq
   }
 
