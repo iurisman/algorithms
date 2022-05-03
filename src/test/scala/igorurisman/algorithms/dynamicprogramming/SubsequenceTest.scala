@@ -64,5 +64,28 @@ class SubsequenceTest extends AnyWordSpec with Matchers {
         Seq(29, 53, 77, 95, 143, 223, 245, 375, 387, 408, 451, 457, 551, 580, 662, 773, 789, 901, 916, 957)
     }
 
+    "compute the length of longest common subsequence" in {
+
+      Subsequence.lcsLen(
+        Seq("m","o","t","h","e","r"),
+        Seq("d","o","e","s"),
+      ) mustBe 2
+
+      Subsequence.lcsLen(
+        Seq(5, 3, 11),
+        Seq(3)
+      ) mustBe 1
+
+      Subsequence.lcsLen(
+        Seq("m","o","t","h","e","r"),
+        Seq("t","e","t","h","e","r"),
+      ) mustBe 4
+
+      Subsequence.lcsLen(
+        Seq("d","a","u","g","h","t","e","r"),
+        Seq("s","o","n"),
+      ) mustBe 0
+
+    }
   }
 }

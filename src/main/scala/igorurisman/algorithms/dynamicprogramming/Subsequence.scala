@@ -80,4 +80,71 @@ object Subsequence {
     result.toSeq
   }
 
+
+  /**
+   * Compute the length of the Longest Common Subsequence of two given sequences.
+   * Let X={xi}, i=1..n and Y={yj}, j=1..m be the two given sequences.
+   * We consider the table with n+1 rows and m+1 columns, with the 0th row and 0th column
+   * are initialized with 0s, representing a convenient boundary case. For the sequences
+   * X={m,o,w,e,r} and Y={d,e,s}
+   *
+   *     d o e s
+   *   0 0 0 0 0
+   * m 0
+   * o 0
+   * w 0
+   * e 0
+   * r 0
+   *
+   * In the general case, the value in the cell (i,j) is computed using the following
+   * recurrence relation:
+   *
+   * C(i,j) = | IF X(i) == Y(j) THEN 1 + C(i-1, j-1)         // IF current elements are the same, the length is one more
+   *          |                                              // than already computed value for the two prefixes, ending
+   *          |                                              // exclusive of the current value.
+   *          | ELSE            max(C(i, j-1), C(i-1, j))    // OTHERWISE, pick the largest of the two already computed
+   *                                                         // values for the two prefixes, inclusive of the current values.
+   *
+   *     d o e s
+   *   0 0 0 0 0
+   * m 0 0 0 0 0
+   * o 0 0 1 1 1
+   * w 0 0 1 1 1
+   * e 0 0 1 2 2
+   * r 0 0 1 2 2
+   *
+   *  In practice, it's not necessary to memoize the entire table; keeping just the
+   *  current and the previous row is sufficient, as implemented by [[TwoRowFrame]] class.
+   */
+  def lcsLen[T](xs: Seq[T], ys: Seq[T]): Int = {
+
+    val length = TwoRowFrame(ys.length + 1)
+
+    for (i <- 0 until xs.length) {
+      for (j <- 0 until ys.length) {
+        length.current(j+1) =
+          if (xs(i) == ys(j)) {
+            length.previous(j) + 1
+          } else {
+            length.previous(j+1).max(length.current(j))
+          }
+      }
+      length.advance()
+    }
+
+    length.previous(ys.length)
+  }
+
+  case class TwoRowFrame[T](length: Int) {
+    private val rows = Array.fill(2, length)(0)
+    private var (prevRow, currRow) = (0, 1)
+
+    def current = rows(currRow)
+    def previous = rows(prevRow)
+
+    def advance(): Unit = {
+      prevRow = (prevRow + 1) % 2
+      currRow = (currRow + 1) % 2
+    }
+  }
 }
