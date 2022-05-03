@@ -53,7 +53,7 @@ object Subsequence {
   def lis[T](seq: Seq[T])(implicit ordering: Ordering[T]): Seq[T] = {
 
     val length = Array.fill(seq.length)(1)
-    val prevIx = new Array[Int](seq.length)
+    val prevIx = Array.fill(seq.length)(-1)
 
     for {
       i <- 0 until seq.length
@@ -61,6 +61,7 @@ object Subsequence {
     } {
       if (ordering.lt(seq(j), seq(i)) && length(i) < length(j) + 1) {
         length(i) = length(j) + 1
+        // No previous index (denoted as -1), if the length for this index i is 1.
         prevIx(i) = j
       }
     }
@@ -69,12 +70,12 @@ object Subsequence {
     val maxIx = length.zipWithIndex.maxBy(_._1)._2
 
     // Reconstruct the max subseq by walking back the prevIx array.
-    val result = collection.mutable.ListBuffer[T](seq(maxIx))
+    val result = collection.mutable.ListBuffer[T]()
     var ix = maxIx
-    while (ix > 0) {
-      ix = prevIx(ix)
+    do {
       seq(ix) +=: result
-    }
+      ix = prevIx(ix)
+    } while (ix >= 0)
 
     result.toSeq
   }

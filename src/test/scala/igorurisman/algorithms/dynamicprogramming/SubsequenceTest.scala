@@ -51,16 +51,17 @@ class SubsequenceTest extends AnyWordSpec with Matchers {
         Seq("a", "c", "b", "c", "e", "d")
       ) mustBe Seq("a", "b", "c", "e")
 
-      Subsequence.lisLen(
+      Subsequence.lis(
         Seq("1", "2", "8", "30", "77")
-      ) mustBe 4
+      ) mustBe Seq("1", "2", "30", "77")
 
-      Subsequence.lisLen(
+      Subsequence.lis(
         Seq("1", "2", "8", "30", "77")
-      )(Ordering.by[String, Int](_.toInt)) mustBe 5
+      )(Ordering.by[String, Int](_.toInt)) mustBe Seq("1", "2", "8", "30", "77")
 
       val rand = new Random(0)
-      Subsequence.lisLen(Array.fill(10000)(rand.nextInt(1000))) mustBe 180
+      Subsequence.lis(Array.fill(100)(rand.nextInt(1000))) mustBe
+        Seq(29, 53, 77, 95, 143, 223, 245, 375, 387, 408, 451, 457, 551, 580, 662, 773, 789, 901, 916, 957)
     }
 
   }
