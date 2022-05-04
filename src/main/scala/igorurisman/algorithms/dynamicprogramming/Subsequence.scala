@@ -175,24 +175,21 @@ object Subsequence {
         }
     }
 
-    //length.foreach(arr => println(arr.mkString(",")))
-
     val result = collection.mutable.ListBuffer.empty[T]
 
     var (i, j) = (xs.length, ys.length)
     while (length(i)(j) > 0) {
-
       if (length(i)(j) == length(i-1)(j-1)) {
-        // Irrelevant element
-        i -= 1; j -= 1 // move diagonally
+        // Irrelevant element, move diagonally
+        i -= 1; j -= 1
       } else if (length(i)(j) == length(i-1)(j)) {
-        // Irrelevant element
-        i -= 1 // move up
+        // Irrelevant element, move up
+        i -= 1
       } else if (length(i)(j) == length(i)(j-1)) {
-        // Irrelevant element
-        j -= 1 // move left
+        // Irrelevant element, move left
+        j -= 1
       } else {
-        // Common element!
+        // Found common element!
         xs(i-1) +=: result
         i -= 1; j -= 1 // move diagonally
       }
