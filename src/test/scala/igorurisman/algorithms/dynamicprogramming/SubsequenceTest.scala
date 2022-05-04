@@ -87,5 +87,32 @@ class SubsequenceTest extends AnyWordSpec with Matchers {
       ) mustBe 0
 
     }
+
+    "compute a longest common subsequence" in {
+
+      Subsequence.lcs(
+        Seq("m","o","t","h","e","r"),
+        Seq("d","o","e","s"),
+      ) mustBe Seq("o", "e")
+
+      Subsequence.lcs(
+        Seq(5, 3, 11),
+        Seq(3)
+      ) mustBe Seq(3)
+
+      Subsequence.lcs(
+        Seq("m","o","t","h","e","r"),
+        Seq("t","e","t","h","e","r"),
+      ) mustBe Seq("t","h","e","r")
+
+      Subsequence.lcs(
+        Seq("d","a","u","g","h","t","e","r"),
+        Seq("s","o","n"),
+      ) mustBe Seq()
+
+      val rand = new Random(0)
+      Subsequence.lcs(Array.fill(1000)(rand.nextInt(1000)),Array.fill(100)(rand.nextInt(1000))) mustBe
+        Seq(773, 490, 471, 626, 130, 224, 559, 378, 981, 500, 163, 32, 756, 538, 472, 361)
+    }
   }
 }
