@@ -57,16 +57,14 @@ object CoinChange extends App {
    */
   def ways(amount: Int, coins: Array[Int]): Long = {
 
-    val coinsSorted = coins.sorted
     val memo = Array(1L) ++ Array.fill(amount)(0L)
 
-    for (i <- 1 to coinsSorted.size) {
-      val subset = coinsSorted.take(i)
-      for (j <- 1 to amount) {
-        memo(j) += (if (subset.last > j) 0 else memo(j - subset.last))
-      }
+    for {
+      coin <- coins.sorted
+      j <- 1 to amount
+    } {
+        memo(j) += (if (coin > j) 0 else memo(j - coin))
     }
-
 
     memo.last
   }
@@ -124,19 +122,18 @@ object CoinChange extends App {
 
   def minCoins(amount: Int, coins: Array[Int]): Option[Int] = {
 
-    val coinsSorted = coins.sorted
     val Inf = Int.MaxValue
     val memo = Array(0) ++ Array.fill(amount)(Inf)
 
-    for (i <- 1 to coinsSorted.size) {
-      val subset = coinsSorted.take(i)
-      for (j <- 1 to amount) {
-        memo(j) = memo(j).min {
-          if (subset.last > j || memo(j - subset.last) == Inf) {
-            Inf
-          } else {
-            memo(j - subset.last) + 1
-          }
+    for {
+      coin <- coins.sorted
+      j <- 1 to amount
+    } {
+      memo(j) = memo(j).min {
+        if (coin > j || memo(j - coin) == Inf) {
+          Inf
+        } else {
+          memo(j - coin) + 1
         }
       }
     }

@@ -120,7 +120,7 @@ object Subsequence {
    */
   def lcsLen[T](xs: Seq[T], ys: Seq[T]): Int = {
 
-    val length = TwoRowFrame(ys.length + 1)
+    val length = TwoRowFrame[Int](ys.length + 1,0)
 
     for (i <- 0 until xs.length) {
       for (j <- 0 until ys.length) {
@@ -135,20 +135,6 @@ object Subsequence {
     }
 
     length.previous(ys.length)
-  }
-
-  case class TwoRowFrame[T](length: Int) {
-    private val rows = Array.fill(2, length)(0)
-    private var (prevRow, currRow) = (0, 1)
-
-    def current = rows(currRow)
-
-    def previous = rows(prevRow)
-
-    def advance(): Unit = {
-      prevRow = (prevRow + 1) % 2
-      currRow = (currRow + 1) % 2
-    }
   }
 
   /**
