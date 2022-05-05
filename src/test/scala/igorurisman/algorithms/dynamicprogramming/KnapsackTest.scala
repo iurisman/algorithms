@@ -60,8 +60,6 @@ class KnapsackTest extends AnyWordSpec with Matchers {
         20,
         Seq(Item(7,25), Item(1,3), Item(2,3), Item(2,7))
       ) mustBe Seq(Item(2,7), Item(2,7), Item(2,7), Item(7,25), Item(7,25))
-
     }
-
   }
 }
