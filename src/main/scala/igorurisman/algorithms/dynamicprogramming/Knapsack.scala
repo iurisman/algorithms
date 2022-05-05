@@ -56,7 +56,6 @@ object Knapsack extends App {
    *
    *  The running time complexity O(W*n) and space complexity O(W)
    */
-
   def maxValue(limit: Int, items: Seq[Item]): Int = {
 
     val memo = TwoRowFrame[Item](limit + 1, Item(0,0))
@@ -73,6 +72,53 @@ object Knapsack extends App {
       memo.advance()
     }
     memo.previous.last.value
+  }
+
+  /**
+   * Compute a most valuable list of items that can be held by a knapsack of weight capacity W,
+   * given a list of n items (wᵢ,vᵢ), 0 < i <= n, where wᵢ denotes the items weight and vᵢ
+   * denotes the item's value. Each item is available in unlimited number of copies.
+   *
+   * We can reuse the algorithm for [[maxValue()]], but we'll need the entire matrix to work backwards
+   * from bottom right to top left in order to reconstruct the the optimal set of Items.
+   * For each cell (i,j) we compare its value to those in cell (i-1, j) and in cell (i, j - wᵢ),
+   * where wᵢ is the weight of the ith item. These two values represent the two possibilities
+   * we had during the decent phase of taking or not taking ith item at this point. If the values
+   * are the same, we can take either route, otherwise we take the route of the larger value.
+   */
+  def pack(limit: Int, items: Seq[Item]): Seq[Item] = {
+
+    // We reuse the [[Item]] class to simply hold a pair (weight, value)
+    val memo = Array.fill(items.size + 1, limit + 1)(Item(0,0))
+    val itemsSorted = items.sortBy(_.weight)
+    for {
+      i <- 1 to items.size
+      j <- 1 to limit
+    } {
+      val item = itemsSorted(i-1)
+      memo(i)(j) =
+        if (item.weight > j) {
+          memo(i-1)(j)
+        } else {
+          memo(i-1)(j).maxByValue(memo(i)(j - item.weight) + item)
+        }
+    }
+
+    val result = collection.mutable.ListBuffer.empty[Item]
+
+    var (i, j) = (items.size, limit)
+    while (i > 0 && j > 0) {
+      val item = itemsSorted(i-1)
+      if (j < item.weight || memo(i)(j) == memo(i-1)(j)) {
+        // We did not take this item. Move up.
+        i -= 1
+      } else {
+        // We took this item
+        item +=: result
+        j -= item.weight
+      }
+    }
+    result.toSeq
   }
 
 }
