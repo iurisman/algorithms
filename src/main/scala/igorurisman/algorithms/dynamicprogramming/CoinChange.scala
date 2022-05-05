@@ -137,10 +137,10 @@ object CoinChange extends App {
         }
       }
     }
-
+    println(memo.mkString(" "))
     memo(amount) match {
       case 0 | Inf => None
-      case _ => Some(amount)
+      case res => Some(res)
     }
   }
 }

@@ -17,6 +17,10 @@ package object dynamicprogramming {
       prevRow = (prevRow + 1) % 2
       currRow = (currRow + 1) % 2
     }
+
+    override def toString: String = {
+      previous.mkString(" ") + "\n" + current.mkString(",")
+    }
   }
 
 }
