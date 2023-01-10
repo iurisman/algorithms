@@ -6,22 +6,22 @@ sealed abstract class Tree[C](content: C) {
   /** This elem's value */
   val get: C = content
 
-  /** Get n-th element in depth first order. 0-based. */
-  private def get(ix: Int): Option[Tree[C]] = {
-    if (ix == 0) Some(this)
-    else {
-      this match {
-        case Leaf(_) => None
-        case Node(_, children) =>
-          for ((c, i) <- children.zipWithIndex) {
-            c.get(ix - i - 1) match {
-              case Some(elem) => return Some(elem)
-              case None =>
-            }
-          }
-          None
-      }
+  def foreach(f: Tree[C] => Unit): Unit = {
+    f(this)
+    this match {
+      case Leaf(_) =>
+      case Node(_, children) => children.foreach(_.foreach(f))
     }
+  }
+  /** Get n-th element in depth first order. 0-based. */
+  def get(ix: Int): Option[Tree[C]] = {
+    var count = 0
+    foreach {
+      node =>
+        if (ix == count) return Some(node)
+        else count += 1
+    }
+    None
   }
 
   def size: Int = this match {
@@ -32,7 +32,6 @@ sealed abstract class Tree[C](content: C) {
   }
 
   override def toString: String = {
-
     Tree.toStringRec(0, this)
   }
 }
@@ -44,6 +43,7 @@ case class Node[C](private val content: C, children: Seq[Tree[C]])
   extends Tree[C](content)
 
 object Tree {
+
   /** Generate a tree of total given size with the random node degree
    * between 1 and given maxDegree (inclusive) */
   def fill[C](size: Int, maxDegree: Int)(value: => C): Tree[C] = {
@@ -77,9 +77,12 @@ object Tree {
   }
 
   def main(args: Array[String]): Unit = {
-    val t = Tree.fill(20000000, 5)(Random.nextPrintableChar())
+    val t = Tree.fill(10, 5)(Random.nextPrintableChar())
     //println(t)
-    println(t.size)
+    //println(t.size)
+    //println(t.get)
+    //t.foreach(t => println(t.get))
+    //println(t.get(8).map(_.get).getOrElse("None"))
   }
 
 }
