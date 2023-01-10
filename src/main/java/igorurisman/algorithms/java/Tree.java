@@ -1,4 +1,4 @@
-package igorurisman.algorithms;
+package igorurisman.algorithms.java;
 
 import java.util.List;
 

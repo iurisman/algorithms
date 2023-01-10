@@ -47,36 +47,39 @@ object Tree {
   /** Generate a tree of total given size with the random node degree
    * between 1 and given maxDegree (inclusive) */
   def fill[C](size: Int, maxDegree: Int)(value: => C): Tree[C] = {
-    assert(size > 0)
     if (size == 1) {
       Leaf(value)
-    } else {
+    } else if (size > 1) {
       var degree = 1 + Random.nextInt(maxDegree)
-      var children = new Array[Tree[C]](degree)
       // each child should have roughly equal size
       val childSizes = Array.fill(degree)(0)
-      for (i <- 0 until size) childSizes(i % degree) += 1
+      for (i <- 0 until (size - 1)) childSizes(i % degree) += 1
       // In case we allocated more children then we need:
       degree = childSizes.count(_ > 0)
-      children = children.slice(0, degree)
+      val children = new Array[Tree[C]](degree)
       for (i <- 0 until degree) {
         children(i) = fill(childSizes(i), maxDegree)(value)
       }
       Node(value, children)
+    } else {
+      throw new Exception(s"Size must be > 0, but was $size")
     }
-  }
-  def main(args: Array[String]): Unit = {
-    val t = Tree.fill(10, 2)(Random.nextPrintableChar())
-    println(t)
   }
 
   private def toStringRec[C](indent: Int, tree: Tree[C]): String = {
-    val result = tree match {
-      case Leaf(c) => "| " * indent + "∟-" + c
+    tree match {
+      case Leaf(c) => " " * indent + s"Leaf($c)"
       case Node(c, children) =>
-        "| " * indent + "∟-" + c + "\n" +
-          children.map(toStringRec(indent + 1, _)).mkString("\n")
+        " " * indent + s"Node($c," + "\n" +
+          children.map(toStringRec(indent + 1, _)).mkString("",",\n","\n") +
+        " " * indent + ")"
     }
-    result
   }
+
+  def main(args: Array[String]): Unit = {
+    val t = Tree.fill(20000000, 5)(Random.nextPrintableChar())
+    //println(t)
+    println(t.size)
+  }
+
 }
