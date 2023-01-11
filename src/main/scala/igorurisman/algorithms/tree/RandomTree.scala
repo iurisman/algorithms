@@ -22,8 +22,8 @@ class RandomTree[C](tree: Tree[C]) {
 object RandomTree {
 
   def main(args: Array[String]): Unit = {
-    val t = Tree.fill(100000000, 25)(Random.nextPrintableChar())
-    println(t.size)
+    val t = Tree.fill(100, 25)(Random.nextPrintableChar())
+    println(t)
     val rt = new RandomTree(t)
     for (_ <- 0 until 10) println(rt.getRand.get)
   }

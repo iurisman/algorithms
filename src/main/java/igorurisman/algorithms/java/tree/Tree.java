@@ -3,12 +3,32 @@ package igorurisman.algorithms.java.tree;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Supplier;
+import static java.util.stream.Collectors.*;
 
 public sealed abstract class Tree<C> permits Node, Leaf {
 
   abstract public C get();
 
   //public Tree<C> get(int n);
+
+  @Override public String toString() {
+    return toStringReq(0, this);
+  }
+
+  private static String toStringReq(int indent, Tree<?> tree) {
+    var margin = " ".repeat(indent);
+    return switch (tree) {
+      case Leaf<?> leaf ->
+        margin + String.format("Leaf(%s)", leaf.get());
+      case Node<?> node -> {
+        var children =
+          Arrays.stream(node.children())
+            .map(child -> toStringReq(indent + 2, child))
+            .collect(joining(",\n"));
+        yield margin + "Node(" + node.get() + ",\n" + children + "\n" + margin + ")";
+      }
+    };
+  }
 
   public static <C> Tree<C> fill(int size, int maxDegree, Supplier<C> op) throws Exception {
     if (size == 1) {
@@ -34,7 +54,7 @@ public sealed abstract class Tree<C> permits Node, Leaf {
 }
 
 final class Leaf<C> extends Tree<C> {
-  final C value;
+  private final C value;
 
   Leaf(C value) {
     this.value = value;
@@ -48,8 +68,8 @@ final class Leaf<C> extends Tree<C> {
 
 final class Node<C> extends Tree<C> {
 
-  final C value;
-  final Tree<C>[] children;
+  private final C value;
+  private final Tree<C>[] children;
 
   Node(C value, Tree<C>[] children) {
     this.value = value;
@@ -59,5 +79,9 @@ final class Node<C> extends Tree<C> {
   @Override
   public C get() {
     return value;
+  }
+
+  public Tree<C>[] children() {
+    return children;
   }
 }
