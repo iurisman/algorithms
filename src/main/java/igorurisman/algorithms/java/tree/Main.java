@@ -1,6 +1,5 @@
 package igorurisman.algorithms.java.tree;
 
-import java.util.List;
 import java.util.Random;
 
 public class Main {
