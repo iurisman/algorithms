@@ -6,10 +6,9 @@ import java.util.function.Supplier;
 
 public sealed abstract class Tree<C> permits Node, Leaf {
 
-  abstract C get();
+  abstract public C get();
 
   //public Tree<C> get(int n);
-
 
   public static <C> Tree<C> fill(int size, int maxDegree, Supplier<C> op) throws Exception {
     if (size == 1) {
@@ -35,10 +34,12 @@ public sealed abstract class Tree<C> permits Node, Leaf {
 }
 
 final class Leaf<C> extends Tree<C> {
-  private final C value;
+  final C value;
+
   Leaf(C value) {
     this.value = value;
   }
+
   @Override
   public C get() {
     return value;
@@ -55,12 +56,8 @@ final class Node<C> extends Tree<C> {
     this.children = children;
   }
 
-  private <T> T traverse(T t) {
-    return null;
-  }
-
   @Override
   public C get() {
-    return this.value;
+    return value;
   }
 }
