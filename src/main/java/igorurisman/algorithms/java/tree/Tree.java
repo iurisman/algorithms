@@ -17,17 +17,17 @@ public sealed abstract class Tree<C> permits Node, Leaf {
 
   private static String toStringReq(int indent, Tree<?> tree) {
     var margin = " ".repeat(indent);
-    return switch (tree) {
-      case Leaf<?> leaf ->
-        margin + String.format("Leaf(%s)", leaf.get());
-      case Node<?> node -> {
-        var children =
-          Arrays.stream(node.children())
-            .map(child -> toStringReq(indent + 2, child))
-            .collect(joining(",\n"));
-        yield margin + "Node(" + node.get() + ",\n" + children + "\n" + margin + ")";
-      }
-    };
+    if (tree instanceof Leaf<?> leaf) {
+      return margin + String.format("Leaf(%s)", leaf.get());
+    } else if (tree instanceof Node<?> node)  {
+      var children =
+        Arrays.stream(node.children())
+          .map(child -> toStringReq(indent + 2, child))
+          .collect(joining(",\n"));
+      return margin + "Node(" + node.get() + ",\n" + children + "\n" + margin + ")";
+    } else {
+      throw new RuntimeException("Unreachable code");
+    }
   }
 
   public static <C> Tree<C> fill(int size, int maxDegree, Supplier<C> op) throws Exception {
