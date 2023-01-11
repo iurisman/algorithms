@@ -1,15 +1,15 @@
 package igorurisman.algorithms.java.tree;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
-public sealed interface Tree<C> permits Node, Leaf {
+public sealed abstract class Tree<C> permits Node, Leaf {
 
-  C get();
+  abstract C get();
 
   //public Tree<C> get(int n);
+
 
   public static <C> Tree<C> fill(int size, int maxDegree, Supplier<C> op) throws Exception {
     if (size == 1) {
@@ -22,7 +22,8 @@ public sealed interface Tree<C> permits Node, Leaf {
       for (int i = 0; i < size - 1; i++) childSizes[i % degree] += 1;
       // In case we allocated more children than we need:
       degree = (int) Arrays.stream(childSizes).filter(d -> d > 0).count();
-      var children = new Tree[degree];
+      @SuppressWarnings("unchecked")
+      Tree<C>[] children = new Tree[degree];
       for (int i = 0; i < degree; i++) {
         children[i] = fill(childSizes[i], maxDegree, op);
       }
@@ -33,20 +34,33 @@ public sealed interface Tree<C> permits Node, Leaf {
   }
 }
 
-record Leaf<C>(C value) implements Tree<C> {
+final class Leaf<C> extends Tree<C> {
+  private final C value;
+  Leaf(C value) {
+    this.value = value;
+  }
   @Override
   public C get() {
     return value;
   }
 }
 
-record Node<C>(C value, Tree<C>[] children) implements Tree<C> {
+final class Node<C> extends Tree<C> {
+
+  final C value;
+  final Tree<C>[] children;
+
+  Node(C value, Tree<C>[] children) {
+    this.value = value;
+    this.children = children;
+  }
+
   private <T> T traverse(T t) {
     return null;
   }
 
   @Override
   public C get() {
-    return value;
+    return this.value;
   }
 }
