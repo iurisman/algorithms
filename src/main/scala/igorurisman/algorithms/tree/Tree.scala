@@ -58,7 +58,7 @@ object Tree {
       // each child should have roughly equal size
       val childSizes = Array.fill(degree)(0)
       for (i <- 0 until (size - 1)) childSizes(i % degree) += 1
-      // In case we allocated more children then we need:
+      // In case we allocated more children than we need:
       degree = childSizes.count(_ > 0)
       val children = new Array[Tree[C]](degree)
       for (i <- 0 until degree) {

@@ -1,12 +1,13 @@
 package igorurisman.algorithms.java.tree;
 
 import java.util.List;
+import java.util.Random;
 
 public class Main {
-  public static void main(String[] args) {
-    var l = new Leaf<String>("a");
-    var n = new Node<String>("n", List.of(l));
-    System.out.println(n);
+  public static void main(String[] args) throws Exception {
+    var tree = Tree.fill(3, 3, () -> new Random().nextInt());
+    System.out.println(tree);
   }
 
 }
+
