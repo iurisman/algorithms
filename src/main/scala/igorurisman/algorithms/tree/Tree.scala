@@ -13,23 +13,27 @@ sealed abstract class Tree[C](content: C) {
       case Node(_, children) => children.foreach(_.foreach(f))
     }
   }
+
+  def foldLeft[A](init: A)(f: (A, Tree[C]) => A): A = {
+    var result = init
+    foreach {
+      subtree => result = f(result, subtree)
+    }
+    result
+  }
+
   /** Get n-th element in depth first order. 0-based. */
   def get(ix: Int): Option[Tree[C]] = {
     var count = 0
     foreach {
-      node =>
-        if (ix == count) return Some(node)
+      subtree =>
+        if (ix == count) return Some(subtree)
         else count += 1
     }
     None
   }
 
-  def size: Int = this match {
-    case Leaf(_) => 1
-    case Node(_, children) => children.foldLeft(1) {
-      case (acc, elem) => acc + elem.size
-    }
-  }
+  def size: Int = foldLeft(0)((acc, _) => acc + 1)
 
   override def toString: String = {
     Tree.toStringRec(0, this)
@@ -78,11 +82,11 @@ object Tree {
 
   def main(args: Array[String]): Unit = {
     val t = Tree.fill(10, 5)(Random.nextPrintableChar())
-    //println(t)
-    //println(t.size)
-    //println(t.get)
-    //t.foreach(t => println(t.get))
-    //println(t.get(8).map(_.get).getOrElse("None"))
+    println(t)
+    println(t.size)
+    println(t.get)
+    t.foreach(t => println(t.get))
+    println(t.get(8).map(_.get).getOrElse("None"))
   }
 
 }
