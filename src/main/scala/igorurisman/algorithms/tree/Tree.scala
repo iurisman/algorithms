@@ -4,46 +4,13 @@ import scala.util.Random
 
 sealed abstract class Tree[C](val content: C) {
 
-  def iterator: Iterator[C] = new Iterator[C]() {
-
-    private var currNode: Option[Tree[C]] = None
-    private var nextNode: Option[Tree[C]] = Some(Tree.this)
-    private var path = collection.mutable.Stack.empty[Node[C]]
-
-    override def hasNext: Boolean = nextNode.isDefined
-
-    override def next(): C = {
-      if (nextNode.isEmpty) throw new NoSuchElementException()
-      currNode = nextNode
-      nextNode = computeNextNode()
-      currNode.get.content
-    }
-
-    private def computeNextNode(): Option[Tree[C]] = {
-      var result = Option.empty[Tree[C]]
-      currNode.get match {
-        case leaf @ Leaf(_) =>
-          // Back up the path until we find a node with unvisited children.
-          var child: Tree[C] = leaf
-          while (path.nonEmpty && result.isEmpty) {
-            val parent = path.pop()
-            parent.children.dropWhile(_ != child).drop(1).headOption match {
-              case Some(nextChild) =>
-                result = Some(nextChild)
-                path.push(parent)
-              case None =>
-                // All children have been visited. Move up the path.
-                child = parent
-            }
-          }
-        case node @ Node(_, children) =>
-          // Add current node to path and return first child.
-          path.push(node)
-          result = Some(children.head)
-      }
-      result
-    }
+  private def dfsIterator: Iterator[Tree[C]] = {
+    (this match {
+      case _: Leaf[C] => Iterator.empty
+      case node: Node[C] => node.children.iterator.flatMap(_.dfsIterator)
+    }) ++ Iterator(this)
   }
+  def iterator: Iterator[C] = dfsIterator.map(_.content)
 
   lazy val size: Int = iterator.size
 
