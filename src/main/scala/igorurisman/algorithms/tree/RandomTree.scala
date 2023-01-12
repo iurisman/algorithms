@@ -20,10 +20,9 @@ class RandomTree[C](tree: Tree[C]) {
 object RandomTree {
 
   def main(args: Array[String]): Unit = {
-    val t = Tree.fill(10, 25)(Random.nextPrintableChar())
-    println(t)
+    val t = Tree.fill(10000000, 25)(Random.nextPrintableChar())
     println(t.size)
-//    val rt = new RandomTree(t)
-//    for (_ <- 0 until 10) println(rt.randContent)
+    val rt = new RandomTree(t)
+    for (_ <- 0 until 10) println(rt.randContent)
   }
 }

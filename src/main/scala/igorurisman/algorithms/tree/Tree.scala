@@ -6,29 +6,31 @@ sealed abstract class Tree[C](val content: C) {
 
   def iterator: Iterator[C] = new Iterator[C]() {
 
-    private var currNode = Tree.this
+    private var currNode: Option[Tree[C]] = None
+    private var nextNode: Option[Tree[C]] = Some(Tree.this)
     private var path = collection.mutable.Stack.empty[Node[C]]
 
-    override def hasNext: Boolean = nextNode(false).isDefined
+    override def hasNext: Boolean = nextNode.isDefined
 
     override def next(): C = {
-      currNode = nextNode(true).getOrElse(throw new NoSuchElementException())
-      currNode.content
+      if (nextNode.isEmpty) throw new NoSuchElementException()
+      currNode = nextNode
+      nextNode = computeNextNode()
+      currNode.get.content
     }
 
-    private def nextNode(hard: Boolean): Option[Tree[C]] = {
-
+    private def computeNextNode(): Option[Tree[C]] = {
       var result = Option.empty[Tree[C]]
-      val nextPath = path.clone()
-
-      currNode match {
-        case Leaf(_) =>
+      currNode.get match {
+        case leaf @ Leaf(_) =>
           // Back up the path until we find a node with unvisited children.
-          var child = currNode
-          while (nextPath.nonEmpty && result.isEmpty) {
-            val parent = nextPath.pop()
+          var child: Tree[C] = leaf
+          while (path.nonEmpty && result.isEmpty) {
+            val parent = path.pop()
             parent.children.dropWhile(_ != child).drop(1).headOption match {
-              case Some(nextChild) => result = Some(nextChild)
+              case Some(nextChild) =>
+                result = Some(nextChild)
+                path.push(parent)
               case None =>
                 // All children have been visited. Move up the path.
                 child = parent
@@ -36,12 +38,8 @@ sealed abstract class Tree[C](val content: C) {
           }
         case node @ Node(_, children) =>
           // Add current node to path and return first child.
-          nextPath.push(node)
+          path.push(node)
           result = Some(children.head)
-      }
-
-      if (hard) {
-        path = nextPath
       }
       result
     }
@@ -54,10 +52,13 @@ sealed abstract class Tree[C](val content: C) {
   }
 }
 
-case class Leaf[C](override val content: C) extends Tree[C](content)
+case class Leaf[C](override val content: C) extends Tree[C](content) {
+  override def equals(other: Any): Boolean = super.equals(other)
+}
 
-case class Node[C](override val content: C, children: Seq[Tree[C]])
-  extends Tree[C](content)
+case class Node[C](override val content: C, children: Seq[Tree[C]]) extends Tree[C](content) {
+  override def equals(other: Any): Boolean = super.equals(other)
+}
 
 object Tree {
 
@@ -94,16 +95,12 @@ object Tree {
   }
 
   def main(args: Array[String]): Unit = {
-    //val t = Tree.fill(10, 5)(Random.nextPrintableChar())
-    val t = Node(
-      'O',
-      Seq(Leaf('T'), Leaf('o'), Leaf('N'))
-    )
-    println(t)
-    t.iterator.foreach(println)
-    //println(t.size)
-//    println(t.content)
-//    println(t.iterator.drop(7))
+    val size = 10000000
+    val t = Tree.fill(size, 5)(Random.nextPrintableChar())
+    // println(t)
+    println(t.iterator.size)
+    println(t.iterator.drop(7).isEmpty)
+    println(t.iterator.drop(size-1).isEmpty)
+    println(t.iterator.drop(size).isEmpty)
   }
-
 }
