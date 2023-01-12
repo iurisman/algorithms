@@ -2,48 +2,61 @@ package igorurisman.algorithms.tree
 
 import scala.util.Random
 
-sealed abstract class Tree[C](content: C) {
-  /** This elem's value */
-  val get: C = content
+sealed abstract class Tree[C](val content: C) {
 
-  def foreach(f: Tree[C] => Unit): Unit = {
-    f(this)
-    this match {
-      case Leaf(_) =>
-      case Node(_, children) => children.foreach(_.foreach(f))
+  def iterator: Iterator[C] = new Iterator[C]() {
+
+    private var currNode = Tree.this
+    private var path = collection.mutable.Stack.empty[Node[C]]
+
+    override def hasNext: Boolean = nextNode(false).isDefined
+
+    override def next(): C = {
+      currNode = nextNode(true).getOrElse(throw new NoSuchElementException())
+      currNode.content
+    }
+
+    private def nextNode(hard: Boolean): Option[Tree[C]] = {
+
+      var result = Option.empty[Tree[C]]
+      val nextPath = path.clone()
+
+      currNode match {
+        case Leaf(_) =>
+          // Back up the path until we find a node with unvisited children.
+          var child = currNode
+          while (nextPath.nonEmpty && result.isEmpty) {
+            val parent = nextPath.pop()
+            parent.children.dropWhile(_ != child).drop(1).headOption match {
+              case Some(nextChild) => result = Some(nextChild)
+              case None =>
+                // All children have been visited. Move up the path.
+                child = parent
+            }
+          }
+        case node @ Node(_, children) =>
+          // Add current node to path and return first child.
+          nextPath.push(node)
+          result = Some(children.head)
+      }
+
+      if (hard) {
+        path = nextPath
+      }
+      result
     }
   }
 
-  def foldLeft[A](init: A)(f: (A, Tree[C]) => A): A = {
-    var result = init
-    foreach {
-      subtree => result = f(result, subtree)
-    }
-    result
-  }
-
-  /** Get n-th element in depth first order. 0-based. */
-  def get(ix: Int): Option[Tree[C]] = {
-    var count = 0
-    foreach {
-      subtree =>
-        if (ix == count) return Some(subtree)
-        else count += 1
-    }
-    None
-  }
-
-  def size: Int = foldLeft(0)((acc, _) => acc + 1)
+  lazy val size: Int = iterator.size
 
   override def toString: String = {
     Tree.toStringRec(0, this)
   }
 }
 
-case class Leaf[C](private val content: C)
-  extends Tree[C](content)
+case class Leaf[C](override val content: C) extends Tree[C](content)
 
-case class Node[C](private val content: C, children: Seq[Tree[C]])
+case class Node[C](override val content: C, children: Seq[Tree[C]])
   extends Tree[C](content)
 
 object Tree {
@@ -81,12 +94,16 @@ object Tree {
   }
 
   def main(args: Array[String]): Unit = {
-    val t = Tree.fill(10, 5)(Random.nextPrintableChar())
+    //val t = Tree.fill(10, 5)(Random.nextPrintableChar())
+    val t = Node(
+      'O',
+      Seq(Leaf('T'), Leaf('o'), Leaf('N'))
+    )
     println(t)
-    println(t.size)
-    println(t.get)
-    t.foreach(t => println(t.get))
-    println(t.get(8).map(_.get).getOrElse("None"))
+    t.iterator.foreach(println)
+    //println(t.size)
+//    println(t.content)
+//    println(t.iterator.drop(7))
   }
 
 }

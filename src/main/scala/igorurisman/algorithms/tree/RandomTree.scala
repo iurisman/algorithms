@@ -1,30 +1,29 @@
 package igorurisman.algorithms.tree
 
 import scala.util.Random
-import scala.util.chaining._
-import scala.language.implicitConversions
 
 class RandomTree[C](tree: Tree[C]) {
 
-  def get: C = tree.get
+  def content: C = tree.content
 
   /** Random element's value from the tree rooted in this elem */
-  def getRand: RandomTree[C] = {
-    (tree match {
-      case Leaf(_) => tree
+  def randContent: C = {
+    tree match {
+      case Leaf(_) => tree.content
       case Node(_,_) =>
         val ix = Random.nextInt(tree.size)
-        tree.get(ix).get
+        tree.iterator.drop(ix).next
 
-    }) pipe { new RandomTree(_) }
+    }
   }
 }
 object RandomTree {
 
   def main(args: Array[String]): Unit = {
-    val t = Tree.fill(100, 25)(Random.nextPrintableChar())
+    val t = Tree.fill(10, 25)(Random.nextPrintableChar())
     println(t)
-    val rt = new RandomTree(t)
-    for (_ <- 0 until 10) println(rt.getRand.get)
+    println(t.size)
+//    val rt = new RandomTree(t)
+//    for (_ <- 0 until 10) println(rt.randContent)
   }
 }

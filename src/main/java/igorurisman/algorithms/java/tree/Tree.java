@@ -1,8 +1,9 @@
 package igorurisman.algorithms.java.tree;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Random;
-import java.util.function.Supplier;
+import java.util.function.*;
 import static java.util.stream.Collectors.*;
 
 public sealed abstract class Tree<C> permits Node, Leaf {
@@ -13,6 +14,13 @@ public sealed abstract class Tree<C> permits Node, Leaf {
 
   @Override public String toString() {
     return toStringReq(0, this);
+  }
+
+  void foreach(Consumer<Tree<C>> op) {
+    op.accept(this);
+    if (this instanceof Node<C> node) {
+      Arrays.stream(node.children()).forEach(child -> child.foreach(op));
+    }
   }
 
   private static String toStringReq(int indent, Tree<?> tree) {
