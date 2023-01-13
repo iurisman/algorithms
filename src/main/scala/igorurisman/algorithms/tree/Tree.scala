@@ -2,7 +2,7 @@ package igorurisman.algorithms.tree
 
 import scala.util.Random
 
-sealed abstract class Tree[C](val content: C) {
+sealed abstract class Tree[C](val content: C) extends Iterable[C] {
 
   private def dfsIterator: Iterator[Tree[C]] = {
     (this match {
@@ -10,9 +10,7 @@ sealed abstract class Tree[C](val content: C) {
       case node: Node[C] => node.children.iterator.flatMap(_.dfsIterator)
     }) ++ Iterator(this)
   }
-  def iterator: Iterator[C] = dfsIterator.map(_.content)
-
-  lazy val size: Int = iterator.size
+  override def iterator: Iterator[C] = dfsIterator.map(_.content)
 
   override def toString: String = {
     Tree.toStringRec(0, this)
@@ -65,7 +63,7 @@ object Tree {
     val size = 10000000
     val t = Tree.fill(size, 5)(Random.nextPrintableChar())
     // println(t)
-    println(t.iterator.size)
+    println(t.size)
     println(t.iterator.drop(7).isEmpty)
     println(t.iterator.drop(size-1).isEmpty)
     println(t.iterator.drop(size).isEmpty)
