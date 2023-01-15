@@ -3,39 +3,50 @@ package igorurisman.algorithms.java.tree;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Spliterators;
 import java.util.function.*;
+import java.util.stream.StreamSupport;
+
 import static java.util.stream.Collectors.*;
 
-public sealed abstract class Tree<C> permits Node, Leaf {
+public sealed abstract class Tree<C> implements Iterable<C> permits Node, Leaf {
 
-  abstract public C get();
-
-  //public Tree<C> get(int n);
+  abstract C value();
 
   @Override public String toString() {
     return toStringReq(0, this);
   }
 
-  void foreach(Consumer<Tree<C>> op) {
-    op.accept(this);
-    if (this instanceof Node<C> node) {
-      Arrays.stream(node.children()).forEach(child -> child.foreach(op));
-    }
-  }
-
   private static String toStringReq(int indent, Tree<?> tree) {
     var margin = " ".repeat(indent);
     if (tree instanceof Leaf<?> leaf) {
-      return margin + String.format("Leaf(%s)", leaf.get());
+      return margin + String.format("Leaf(%s)", leaf.value());
     } else if (tree instanceof Node<?> node)  {
       var children =
         Arrays.stream(node.children())
           .map(child -> toStringReq(indent + 2, child))
           .collect(joining(",\n"));
-      return margin + "Node(" + node.get() + ",\n" + children + "\n" + margin + ")";
+      return margin + "Node(" + node.value() + ",\n" + children + "\n" + margin + ")";
     } else {
       throw new RuntimeException("Unreachable code");
     }
+  }
+
+  private Iterator<Tree<C>> dfsIterator(Tree<C> tree) {
+    throw new RuntimeException();
+  }
+
+  @Override public Iterator<C> iterator() {
+    return new Iterator<C>() {
+      private Iterator<Tree<C>> nodeIterator = dfsIterator(Tree.this);
+      @Override public boolean hasNext() {
+        return nodeIterator.hasNext();
+      }
+      @Override
+      public C next() {
+        return nodeIterator.next().value();
+      }
+    };
   }
 
   public static <C> Tree<C> fill(int size, int maxDegree, Supplier<C> op) throws Exception {
@@ -63,33 +74,25 @@ public sealed abstract class Tree<C> permits Node, Leaf {
 
 final class Leaf<C> extends Tree<C> {
   private final C value;
-
   Leaf(C value) {
     this.value = value;
   }
-
-  @Override
-  public C get() {
+  C value() {
     return value;
   }
 }
 
 final class Node<C> extends Tree<C> {
-
   private final C value;
   private final Tree<C>[] children;
-
   Node(C value, Tree<C>[] children) {
     this.value = value;
     this.children = children;
   }
-
-  @Override
-  public C get() {
+  C value() {
     return value;
   }
-
-  public Tree<C>[] children() {
+  Tree<C>[] children() {
     return children;
   }
 }
