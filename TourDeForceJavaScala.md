@@ -17,7 +17,7 @@ Interfaces are partial equivalents of Scala traits with the following limitation
 * Java interfaces are not stackable: they are always selfless and their order in a type declaration is not significant.
 * They may only contain abstract methods. Fields defined in the interface must be concrete.
 * Concrete methods in interfaces are known as default implementations and must be annotatged with the `default`
-qualifer. 
+qualifier. 
 
 If more than one interface in a class declaration contains the same method (abstract or concrete), 
 the implementing class must either be declared abstract or override it:
@@ -51,66 +51,61 @@ class Foo {
 ### 1.2 Type Parameters (Generics)
 In Java, types which take parameters are called generic types, or, simply, generics. 
 ```java
-interface Comparator<T> { ... } // See java.util.Comparator
+interface Comparator<T> { ... } // Compares two values of some type T
 ```
 
-Java does not support higher-kinded types. Only types that can have values can be type parameters.
+Java does not support higher-kinded types; only types that can have values can be type parameters.
 ```java
 interface Functor<F<?>> {} // Syntax error
 ```
 
-A type parameter can have an upper-bound:
+A type parameter can have an upper bound:
 ```java
 class Foo<T extends Bar> { ... } // `T` must be a subtype of `Bar`. 
 ```
-There is no support for lower-bounds.
+There is no support for lower-bounded type parameters.
 
-Java has no explicit support for variance. However, the following two special cases have variance-like semantics.
-* There is special syntax for creating variables of a synthetic generic type which is co- or contra-variant replicas
-  of some named generic type:
+Java has no explicit support for variance. However, the following two facilities exist to help the programmer
+work around this limitation indirectly.
+* There is special syntax for declaring synthetic generic types that are co- or contra-variant replicas of some named 
+generic type:
 ```java
-Foo<? extends Number> covarFoo = new Foo<Integer>(0);   // Covariance
+Foo<? extends Number> covarFoo = new Foo<Integer>(0);   // A covariant version of Foo<T>.
 Foo<? extends Number> covarFoo = new Foo<Object>(0);    // Compilation error: covariance vialation
 Foo<? super Number> contravarFoo = new Foo<Integer>(0); // Compilation error: contravariance violation
-Foo<? super Number> contravarFoo = new Foo<Object>(0);  // Contravariance
+Foo<? super Number> contravarFoo = new Foo<Object>(0);  // A contravariant version of Foo<T>.
 ```
-It is particularly common to see this syntax in method signatures. For example, the signature of the
-`java.util.Stream.filter()` method looks like this:
+It is particularly common to see this syntax in method signatures. For example, here's the signature of the
+`java.util.Stream.filter()` method:
 ```java
 interface Predicate<P> {
   boolean test(P p);  
 }
-
 interface Stream<T> {
-  Stream<T> filter(Predicate<? super T> predicate); // A predicate implementation for T or its superclass 
+  Stream<T> filter(Predicate<? super T> predicate); 
 }
 ```
-What this ungainly looking signature is saying is that, for instance, a predicate over `Number`s can be used to filter
-a stream of `Integer`s, because `Number` is a superclass of `Integer`. But this is a property of the `Predicate` type 
-and not at all of the `filter()` method! In Scala, with its direct support for variance, (and if it needed the type 
-`Predicate`) it would have been defined as contravariant in its type parameter, leaving the `filter()` method's 
-signature be plain and simple, it actually is:
-```scala
-trait Predicate[-P] {
-  def test(p: P);  
-}
-trait Iterable[A] {
-  def filter(pred: (A) => Boolean): Iterable[A]
-}
-```
+What this ungainly looking signature is saying is that a predicate over , for instance, `Number`s can be used to filter
+a stream of `Integer`s, because `Number` is a superclass of `Integer`. Which is to say that the `filter()` method
+expects a contravariant version of the type `Predicate`. But, clearly, there can be no users of `Predicate` that would 
+need it to be covariant. Variance is inherent in the type itself and is independent of the type's users. In Scala, 
+with its direct support for variance, (and if it needed the type `Predicate`) it would have  been defined as simply 
+`trait Predicate[-P] {...}`.
 
 * Arrays are implicitly covariant. `Foo[]` is automatically a subclass of `Bar[]` if (and only if) `Foo` is a subclass 
-of `Bar`. Covariance violations are checked at run time whenever an element of an array is updated:
+of `Bar`. Variance violations are checked at run time whenever an element of an array is updated:
 ```java
    Number[] integers = new Integer[2]; // Ok due to implicit covariance
-   integers[0] = 0.5;  // throws ArrayStoreException
+   integers[0] = 0.5;  // Compiles, but throws ArrayStoreException at run time.
 ```
 
 ### 1.3 Static Members
 Java does not have objects in Scala's sense of the word¹. Rather, static members are declared alongside
-with instance members inside the class definition and are annotated with the keyword `static`.
-While in Scala, an object can extend a trait or even a class, static methods in Java do not override,
-but
+with instance members inside the class body and are annotated with the keyword `static`.
+While in Scala, an object can extend a trait or even a class, static methods in Java are not subject to inheritance.
+When the name of a static member clashes with that of a static member in a superclass, the latter is hidden as a matter
+of syntactic context. A static member cannot be abstract or annotated with `@Override`. Interfaces can have static
+values, which are available to static members of implementing classes.
 
 ¹ In Java, _object_ refers to the same concept as _instance_ in Scala: an instantiation of a concrete class.
 

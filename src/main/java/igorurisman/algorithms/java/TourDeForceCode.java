@@ -10,16 +10,20 @@ public class TourDeForceCode {
   static LocalDate readBirthdateFromDatabase(String name) {
     return LocalDate.of(1964, Month.JUNE, 7);
   }
+  static void println(String s) {
+    System.out.println(s);
+  }
   public static void main(String[] args) {
 
-    List.of("The Stranger", "Citizen Kane", "Touch of Evil")
-      .forEach(name -> System.out.println("Film Title " + name));
-
-    interface Bar {
-
+    abstract class Foo {
+       static int foo = 5;
     }
 
+    class Bar extends Foo {
+      static String foo = "foo";
+    }
 
+    println(String.valueOf(new Bar().foo));
 
 //      .map(String::toUpperCase)
 //      .collect(Collectors.toUnmodifiableList());
