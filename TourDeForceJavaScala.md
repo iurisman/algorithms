@@ -34,7 +34,6 @@ class Foo implements Bar, Baz {
   @Override String method() { return "Foo"; }  // Ok
 }
 ```
-
 If a field defined in a subclass has the same name as one defined in its superclass, the latter is not overridden,
 hidden as a matter of syntactic scope, and cannot be annotated with `@Override`. There are no lazy fields in Java; 
 all fields must be initializable at class creation time either with a static expression or by a constructor. 
@@ -110,7 +109,7 @@ values, which are available to static members of implementing classes.
 ¹ In Java, _object_ refers to the same concept as _instance_ in Scala: an instantiation of a concrete class.
 
 ### 1.4 Type Inference
-Modern Java has limited type inference. In particular, in most local variable declarations the type can be inferred:
+Modern Java has limited type inference. In particular, in most local variable declarations their type can be inferred:
 ```java
 var films = new LinkedList<String>();
 ```
@@ -132,11 +131,72 @@ Types of concrete class members, both fields and methods, cannot be inferred.
 Types of lambda parameters are inferred and are commonly omitted.
 ```java
 List.of("The Stranger", "Citizen Kane", "Touch of Evil")
-    .forEach(name -> System.out.println("Film Title " + name));  // Type of `name` is inferred.
+    .forEach(name -> System.out.println("Film Title: " + name));  // Type of `name` is inferred.
 ```
 
-## 2 Java Streams and Lambda Expressions
-It is possible to use a syntax resembling functional literal in place of a method parameter:
+## 2 Functions
+### 2.1 Functional Interfaces as Function Types
+Java does not support functions as first-class values: there's no function type that can be instantiated, assigned,
+or passed to a method or another function as a parameter. Nevertheless, it has made significant strides toward
+enabling function-like syntax, which is known as _lambda expressions_. Such expressions provide concise syntactic
+alternative for making certain class literals seem function literals. In the above example, 
+`name -> System.out.println("Film Title: " + name)` has all the syntactic trappings of a function literal. It can be 
+even assigned:
+```java
+Consumer<List> func = name -> System.out.println("Film Title: " + name);  // Type of `func` must be declared explicitly
+```
+now the previous expression can be rewritten as
+```java
+List.of("The Stranger", "Citizen Kane", "Touch of Evil").forEach(func);
+```
+This works because the method `forEach()` has the suitable signature:
+```java
+interface Iterable<T> {
+  void forEach(Consumer<? super T> action); // Java's way of expressing the fact that type `Consumer` is contravariant 
+}
+```
+The type `Consumer` is what Java refers to as _functional interface_:
+```java
+@FunctionalInterface                                         // 
+public interface Consumer<T> {
+  void accept(T t);                                          
+  default Consumer<T> andThen(Consumer<? super T> after) {
+    Objects.requireNonNull(after);
+    return (T t) -> { accept(t); after.accept(t); };
+  }
+}
+```
+**Listing 2.1.1**
+
+The actual value of `func` is, therefore, an instance of `Consumer` instantiated to this class literal:
+```java
+    Consumer<String> f = new Consumer<>() {
+      @Override
+      public void accept(String name) {
+        System.out.println("Film Title: " + name);
+      }
+    };
+```
+That's why lambda expressions are commonly referred to as "syntactic sugar" for class literals. The best way to think
+of them is as an alternative syntax for class literals of a certain type. Java compiler will accept a lambda expression 
+in place of the traditional class literal, provided that it is structurally compatible with the target type, which must 
+be explicitly declared. 
+* The target type must be an interface with exactly one abstract method. Such interfaces are referred to as 
+_functional_. The method's name is not significant.
+* Parameter list in the lambda expression must have the same arity as that of the abstract method in the target
+interface.
+* The return type of the abstract method must be a supertype of that returned by the lambda expression.
+
+The `Consumer` interface in Listing 2.1.1 is an example of a functional interface. Note that a functional interface
+need not be annotated with `@FunctionalInterface`. However, it is a good idea to annotate custom functional interfaces
+in order to signal the intent, and to prevent accidental updates, introducing new abstract members. Such an update will
+cause a compilation error on the interface, and not just on the corresponding lambda expressions, which may be located
+in different compilation units.
+
+## 2.? Streams and Higher Order Transformations
+Java's collection classes do not 
+
+It is possible to use a syntax resembling function literal in place of a method parameter:
 
 ```java
 var igorsBirthdate = birthdaysMap.compute("Igor", key -> Date())

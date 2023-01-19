@@ -3,6 +3,7 @@ package igorurisman.algorithms.java;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -10,20 +11,32 @@ public class TourDeForceCode {
   static LocalDate readBirthdateFromDatabase(String name) {
     return LocalDate.of(1964, Month.JUNE, 7);
   }
-  static void println(String s) {
+  static void println(Object s) {
     System.out.println(s);
   }
   public static void main(String[] args) {
 
-    abstract class Foo {
-       static int foo = 5;
+
+    Consumer<String> f = new Consumer<>() {
+      @Override
+      public void accept(String name) {
+        System.out.println("Film Title: " + name);
+      }
+    };
+
+    List.of("The Stranger", "Citizen Kane", "Touch of Evil").forEach(f);
+
+    interface Foo {
+      void accept(String s);
+      String foo();
     }
 
-    class Bar extends Foo {
-      static String foo = "foo";
+    class Bar {
+      void takeFoo(Foo foo) {
+        println(foo);
+      }
     }
-
-    println(String.valueOf(new Bar().foo));
+    new Bar().takeFoo(s -> println("here"));
 
 //      .map(String::toUpperCase)
 //      .collect(Collectors.toUnmodifiableList());
