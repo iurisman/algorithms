@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TourDeForceCode {
   static LocalDate readBirthdateFromDatabase(String name) {
@@ -11,10 +12,15 @@ public class TourDeForceCode {
   }
   public static void main(String[] args) {
 
-    interface Functor<F<?>> { ... }
+    List.of("The Stranger", "Citizen Kane", "Touch of Evil")
+      .forEach(name -> System.out.println("Film Title " + name));
 
-        //    var films = List.of("Citizen Kane", "Touch of Evil").stream()
-//      .filter(f -> f.contains("Kane"))
+    interface Bar {
+
+    }
+
+
+
 //      .map(String::toUpperCase)
 //      .collect(Collectors.toUnmodifiableList());
 //    System.out.println(films);

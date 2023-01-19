@@ -6,42 +6,17 @@ By Igor Urisman, January 14, 2023.
 * Tradeoff desision by language designers in favor of backward compatibility...
 
 ## 1 General Comments
-### 1.1 Grammar
-Modern Java has limited type inference. In particular in most variable declarations the type can be inferred:
-```java
-var films = new LinkedList<String>();
-```
-is equivalent to
-```java
-LinkedList<String> films = new LinkedList<String>();
-```
-
-As well, just like in Scala, the type parameter list (but, unlike Scala, not the angle brackets) on the right of 
-the assignment may be dropped,if the value's type is explicitly declared on the left:
-
-```java
-List<String> list = new LinkedList<>();
-```
-
-The keyword `var` has the same meaning as in Scala. There is no `val` keyword in Java, but the qualifier `final`
-can be used to declare an immutable value:
-```java
-final var films = new LinkedList<String>();
-```
-
-### 1.2 Inheritance
-Like Scala, Java implements single inheritance mechanism, whereby a class can inherit from one class and
-implement any number of interfaces:
+### 1.2 Classes and Inheritance
+Like Scala, Java implements the single inheritance model, whereby a class can inherit from at most one class and,
+optionally, implement any number of interfaces:
 ```java
 class Foo extends Bar implements Baz, Qux { ... }
 ```
-Only methods can be overridden. A field defined in a subclass hides a likely-named field in the superclass as
-a matter of scope, not inheritance.
 
 Interfaces are partial equivalents of Scala traits with the following limitations:
 * Java interfaces are not stackable: they are always selfless and their order in a type declaration is not significant.
 * They may only contain abstract methods. Fields defined in the interface must be concrete.
-* Concrete methods in interfaces are known as default implementations and must be declared with the `default`
+* Concrete methods in interfaces are known as default implementations and must be annotatged with the `default`
 qualifer. 
 
 If more than one interface in a class declaration contains the same method (abstract or concrete), 
@@ -55,27 +30,118 @@ interface Bar {
   default String method() { return "Bar"; }
 }
 class Foo implements Bar, Baz { }  // Compilation error
-```
-
-There are no lazy fields in Java, all fields must be initialized at class creation time either with a static
-expression or by a constructor and can always be declared final.
-```java
-class Foo {
-  final int myAge;
-  Foo() { myAge = 100; }
+class Foo implements Bar, Baz {
+  @Override String method() { return "Foo"; }  // Ok
 }
 ```
-### 1.2 Type Parameters
-In Java, types which take parameters 
 
-Java does not support higher-kinded types (and, consequently, no type classes):
+If a field defined in a subclass has the same name as one defined in its superclass, the latter is not overridden,
+hidden as a matter of syntactic scope, and cannot be annotated with `@Override`. There are no lazy fields in Java; 
+all fields must be initializable at class creation time either with a static expression or by a constructor. 
+
+Both fields (which are never abstract) and concrete methods can be declared `final`, though with different
+implications:
 ```java
-interface Foo<X<?>> {} // Syntax error
+class Foo {
+  final int height = 186;  // Cannot be mutated
+  final void printHeight() { System.out.println("My height: " + height); } // Cannot be overridden
+}
+```
+
+### 1.2 Type Parameters (Generics)
+In Java, types which take parameters are called generic types, or, simply, generics. 
+```java
+interface Comparator<T> { ... } // See java.util.Comparator
+```
+
+Java does not support higher-kinded types. Only types that can have values can be type parameters.
+```java
+interface Functor<F<?>> {} // Syntax error
+```
+
+A type parameter can have an upper-bound:
+```java
+class Foo<T extends Bar> { ... } // `T` must be a subtype of `Bar`. 
+```
+There is no support for lower-bounds.
+
+Java has no explicit support for variance. However, the following two special cases have variance-like semantics.
+* There is special syntax for creating variables of a synthetic generic type which is co- or contra-variant replicas
+  of some named generic type:
+```java
+Foo<? extends Number> covarFoo = new Foo<Integer>(0);   // Covariance
+Foo<? extends Number> covarFoo = new Foo<Object>(0);    // Compilation error: covariance vialation
+Foo<? super Number> contravarFoo = new Foo<Integer>(0); // Compilation error: contravariance violation
+Foo<? super Number> contravarFoo = new Foo<Object>(0);  // Contravariance
+```
+It is particularly common to see this syntax in method signatures. For example, the signature of the
+`java.util.Stream.filter()` method looks like this:
+```java
+interface Predicate<P> {
+  boolean test(P p);  
+}
+
+interface Stream<T> {
+  Stream<T> filter(Predicate<? super T> predicate); // A predicate implementation for T or its superclass 
+}
+```
+What this ungainly looking signature is saying is that, for instance, a predicate over `Number`s can be used to filter
+a stream of `Integer`s, because `Number` is a superclass of `Integer`. But this is a property of the `Predicate` type 
+and not at all of the `filter()` method! In Scala, with its direct support for variance, (and if it needed the type 
+`Predicate`) it would have been defined as contravariant in its type parameter, leaving the `filter()` method's 
+signature be plain and simple, it actually is:
+```scala
+trait Predicate[-P] {
+  def test(p: P);  
+}
+trait Iterable[A] {
+  def filter(pred: (A) => Boolean): Iterable[A]
+}
+```
+
+* Arrays are implicitly covariant. `Foo[]` is automatically a subclass of `Bar[]` if (and only if) `Foo` is a subclass 
+of `Bar`. Covariance violations are checked at run time whenever an element of an array is updated:
+```java
+   Number[] integers = new Integer[2]; // Ok due to implicit covariance
+   integers[0] = 0.5;  // throws ArrayStoreException
+```
+
+### 1.3 Static Members
+Java does not have objects in Scala's sense of the word¹. Rather, static members are declared alongside
+with instance members inside the class definition and are annotated with the keyword `static`.
+While in Scala, an object can extend a trait or even a class, static methods in Java do not override,
+but
+
+¹ In Java, _object_ refers to the same concept as _instance_ in Scala: an instantiation of a concrete class.
+
+### 1.4 Type Inference
+Modern Java has limited type inference. In particular, in most local variable declarations the type can be inferred:
+```java
+var films = new LinkedList<String>();
+```
+is equivalent to
+```java
+LinkedList<String> films = new LinkedList<String>();
+```
+
+The keyword `var` has the same meaning as in Scala. There is no `val` keyword in Java, but the qualifier `final`
+can be used to declare an immutable value. As well, just like in Scala, the type parameter list (but, unlike Scala,
+not the angle brackets) on the right of the assignment may be dropped, if the value's type is explicitly
+declared on the left:
+```java
+List<String> list = new LinkedList<>();
+```
+
+Types of concrete class members, both fields and methods, cannot be inferred.
+
+Types of lambda parameters are inferred and are commonly omitted.
+```java
+List.of("The Stranger", "Citizen Kane", "Touch of Evil")
+    .forEach(name -> System.out.println("Film Title " + name));  // Type of `name` is inferred.
 ```
 
 ## 2 Java Streams and Lambda Expressions
-Starting with Java 8, it is possible to use a syntax resembling functional literal in place
-of a method parameter:
+It is possible to use a syntax resembling functional literal in place of a method parameter:
 
 ```java
 var igorsBirthdate = birthdaysMap.compute("Igor", key -> Date())
@@ -186,7 +252,19 @@ Mutable lists are instantiated with constructors on concrete implementation clas
 ```java
 var filmsByOrsonWelles = new LinkedList<String>(films);
 ```
-Immutable lists are created by static factory methods `List.of()`, `List.copyOf()`. 
+Immutable lists are created by static factory methods `List.of()`, `List.copyOf()`.
+
+There are no conversion methods to other collection type, e.g. Scala's `List.toSet()`. The only exception is the two
+`toArray()` methods:
+```java
+Object[] toArray()
+```
+returns an array of this list's elements, preserving the order. Due to type erasure, the return type of ... 
+
+```java
+Object[] toArray()
+<T> T[]toArray(T[] a)
+```
 
 #### ?.1.3 Maps
 Since the introduction of lambdas (See section ...) in Java 8, some new "higher order" methods are available on maps:
