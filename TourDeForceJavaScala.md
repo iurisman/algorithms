@@ -234,7 +234,11 @@ cause a compilation error on the interface, and not just on the corresponding la
 in different compilation units.
 
 ### 2.2 Standard Functional Interfaces
-The package `java.util.function` contains a 
+The package `java.util.function` contains an assortment of reusable functional interfaces that fit many common use
+cases. 
+| Interface | Corresponding Lambda Expression |
+|-----------|---------------------------------|
+|`*Consumer` | types are suitable for lambda expressions which |
 
 ### 2.3 Streams and Higher Order Transformations
 Lambda expressions 
