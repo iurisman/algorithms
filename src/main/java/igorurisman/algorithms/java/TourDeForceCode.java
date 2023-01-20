@@ -17,26 +17,12 @@ public class TourDeForceCode {
   public static void main(String[] args) {
 
 
-    Consumer<String> f = new Consumer<>() {
-      @Override
-      public void accept(String name) {
-        System.out.println("Film Title: " + name);
-      }
-    };
-
-    List.of("The Stranger", "Citizen Kane", "Touch of Evil").forEach(f);
-
-    interface Foo {
-      void accept(String s);
-      String foo();
-    }
-
-    class Bar {
-      void takeFoo(Foo foo) {
-        println(foo);
+    class Foo {
+      String foo() throws RuntimeException {
+        throw new RuntimeException("I am a checked exception");
       }
     }
-    new Bar().takeFoo(s -> println("here"));
+
 
 //      .map(String::toUpperCase)
 //      .collect(Collectors.toUnmodifiableList());

@@ -3,9 +3,98 @@
 #### Covers Java 17
 By Igor Urisman, January 14, 2023.
 
-* Tradeoff desision by language designers in favor of backward compatibility...
+* Tradeoff decision by language designers in favor of backward compatibility...
 
 ## 1 General Comments
+### 1.1 Types
+Java's value types exist in two incarnations. Following C++, Java offers primitive types, like `int` or `double`, but 
+in keeping with a stricter object model, it also offers wrapper classes, like `Integer` or `Double`, which offer many
+useful methods, like `decode()` for parsing the numeric value from a string. The compiler offers autoboxing facility,
+which  seamlessly converts between the two so the programmer typically doesn't have to distinguish between the two.
+Early Java programming style biased toward using primitive types, but later, since the introduction of parametric types,
+boxed types became preferred, because primitives cannot serve as type parameters.
+
+There's also a special keyword `void` used in place of the return type in method signatures to indicate that a method 
+returns no value. 
+
+#### 1.1.1 Type System
+As opposed to Scala, Java is not a purely object 
+#### 1.1.2 Type Parameters (Generics)
+In Java, types which take parameters are called generic types, or, simply, generics.
+```java
+interface Comparator<T> { ... } // Compares two values of some type T
+```
+
+Java does not support higher-kinded types; only types that can have values can be type parameters.
+```java
+interface Functor<F<?>> {} // Syntax error
+```
+
+A type parameter can have an upper bound:
+```java
+class Foo<T extends Bar> { ... } // `T` must be a subtype of `Bar`. 
+```
+There is no support for lower-bounded type parameters.
+
+Java has no explicit support for variance. However, the following two facilities exist to help the programmer
+work around this limitation indirectly.
+* There is special syntax for declaring synthetic generic types that are co- or contra-variant replicas of some named
+  generic type:
+```java
+Foo<? extends Number> covarFoo = new Foo<Integer>(0);   // A covariant version of Foo<T>.
+Foo<? extends Number> covarFoo = new Foo<Object>(0);    // Compilation error: covariance vialation
+Foo<? super Number> contravarFoo = new Foo<Integer>(0); // Compilation error: contravariance violation
+Foo<? super Number> contravarFoo = new Foo<Object>(0);  // A contravariant version of Foo<T>.
+```
+It is particularly common to see this syntax in method signatures. For example, here's the signature of the
+`java.util.Stream.filter()` method:
+```java
+interface Predicate<P> {
+  boolean test(P p);  
+}
+interface Stream<T> {
+  Stream<T> filter(Predicate<? super T> predicate); 
+}
+```
+What this ungainly looking signature is saying is that a predicate over , for instance, `Number`s can be used to filter
+a stream of `Integer`s, because `Number` is a superclass of `Integer`. Which is to say that the `filter()` method
+expects a contravariant version of the type `Predicate`. But, clearly, there can be no users of `Predicate` that would
+need it to be covariant. Variance is inherent in the type itself and is independent of the type's users. In Scala,
+with its direct support for variance, (and if it needed the type `Predicate`) it would have  been defined as simply
+`trait Predicate[-P] {...}`.
+
+* Arrays are implicitly covariant. `Foo[]` is automatically a subclass of `Bar[]` if (and only if) `Foo` is a subclass
+  of `Bar`. Variance violations are checked at run time whenever an element of an array is updated:
+```java
+   Number[] integers = new Integer[2]; // Ok due to implicit covariance
+   integers[0] = 0.5;  // Compiles, but throws ArrayStoreException at run time.
+```
+#### 1.1.3 Type Inference
+Modern Java has limited type inference. In particular, in most local variable declarations their type can be inferred:
+```java
+var films = new LinkedList<String>();
+```
+is equivalent to
+```java
+LinkedList<String> films = new LinkedList<String>();
+```
+
+The keyword `var` has the same meaning as in Scala. There is no `val` keyword in Java, but the qualifier `final`
+can be used to declare an immutable value. As well, just like in Scala, the type parameter list (but, unlike Scala,
+not the angle brackets) on the right of the assignment may be dropped, if the value's type is explicitly
+declared on the left:
+```java
+List<String> list = new LinkedList<>();
+```
+
+Types of concrete class members, both fields and methods, cannot be inferred.
+
+Types of lambda parameters are inferred and are commonly omitted.
+```java
+List.of("The Stranger", "Citizen Kane", "Touch of Evil")
+    .forEach(name -> System.out.println("Film Title: " + name));  // Type of `name` is inferred.
+```
+
 ### 1.2 Classes and Inheritance
 Like Scala, Java implements the single inheritance model, whereby a class can inherit from at most one class and,
 optionally, implement any number of interfaces:
@@ -47,57 +136,6 @@ class Foo {
 }
 ```
 
-### 1.2 Type Parameters (Generics)
-In Java, types which take parameters are called generic types, or, simply, generics. 
-```java
-interface Comparator<T> { ... } // Compares two values of some type T
-```
-
-Java does not support higher-kinded types; only types that can have values can be type parameters.
-```java
-interface Functor<F<?>> {} // Syntax error
-```
-
-A type parameter can have an upper bound:
-```java
-class Foo<T extends Bar> { ... } // `T` must be a subtype of `Bar`. 
-```
-There is no support for lower-bounded type parameters.
-
-Java has no explicit support for variance. However, the following two facilities exist to help the programmer
-work around this limitation indirectly.
-* There is special syntax for declaring synthetic generic types that are co- or contra-variant replicas of some named 
-generic type:
-```java
-Foo<? extends Number> covarFoo = new Foo<Integer>(0);   // A covariant version of Foo<T>.
-Foo<? extends Number> covarFoo = new Foo<Object>(0);    // Compilation error: covariance vialation
-Foo<? super Number> contravarFoo = new Foo<Integer>(0); // Compilation error: contravariance violation
-Foo<? super Number> contravarFoo = new Foo<Object>(0);  // A contravariant version of Foo<T>.
-```
-It is particularly common to see this syntax in method signatures. For example, here's the signature of the
-`java.util.Stream.filter()` method:
-```java
-interface Predicate<P> {
-  boolean test(P p);  
-}
-interface Stream<T> {
-  Stream<T> filter(Predicate<? super T> predicate); 
-}
-```
-What this ungainly looking signature is saying is that a predicate over , for instance, `Number`s can be used to filter
-a stream of `Integer`s, because `Number` is a superclass of `Integer`. Which is to say that the `filter()` method
-expects a contravariant version of the type `Predicate`. But, clearly, there can be no users of `Predicate` that would 
-need it to be covariant. Variance is inherent in the type itself and is independent of the type's users. In Scala, 
-with its direct support for variance, (and if it needed the type `Predicate`) it would have  been defined as simply 
-`trait Predicate[-P] {...}`.
-
-* Arrays are implicitly covariant. `Foo[]` is automatically a subclass of `Bar[]` if (and only if) `Foo` is a subclass 
-of `Bar`. Variance violations are checked at run time whenever an element of an array is updated:
-```java
-   Number[] integers = new Integer[2]; // Ok due to implicit covariance
-   integers[0] = 0.5;  // Compiles, but throws ArrayStoreException at run time.
-```
-
 ### 1.3 Static Members
 Java does not have objects in Scala's sense of the word¹. Rather, static members are declared alongside
 with instance members inside the class body and are annotated with the keyword `static`.
@@ -108,31 +146,33 @@ values, which are available to static members of implementing classes.
 
 ¹ In Java, _object_ refers to the same concept as _instance_ in Scala: an instantiation of a concrete class.
 
-### 1.4 Type Inference
-Modern Java has limited type inference. In particular, in most local variable declarations their type can be inferred:
+### 1.3 Exceptions
+Java supports exceptions with syntax similar to Scala's. They are thrown with the `throw` keyword, and can be caught
+with the `try` block:
 ```java
-var films = new LinkedList<String>();
+try {
+  var i = Integer.decode(someString);
+} catch (NumberFormatException ex) {      
+  ...
+} catch (RuntimeException ex) {
+  ...
+} finally {   
+  ...
+} 
 ```
-is equivalent to
+The semantics are similar to Scala's, with one crucial difference: Java's exceptions can be both _checked_ and 
+_unchecked_. Unchecked exceptions behave like Scala exceptions. Checked exceptions must be declared in the signature
+of the method that either throws them or calls another method that declares them in its `throws` clause:
 ```java
-LinkedList<String> films = new LinkedList<String>();
+String foo() throws Exception {
+  ...
+  throw new Exception("I am a checked exception");
+  ...
+}
 ```
-
-The keyword `var` has the same meaning as in Scala. There is no `val` keyword in Java, but the qualifier `final`
-can be used to declare an immutable value. As well, just like in Scala, the type parameter list (but, unlike Scala,
-not the angle brackets) on the right of the assignment may be dropped, if the value's type is explicitly
-declared on the left:
-```java
-List<String> list = new LinkedList<>();
-```
-
-Types of concrete class members, both fields and methods, cannot be inferred.
-
-Types of lambda parameters are inferred and are commonly omitted.
-```java
-List.of("The Stranger", "Citizen Kane", "Touch of Evil")
-    .forEach(name -> System.out.println("Film Title: " + name));  // Type of `name` is inferred.
-```
+Checked exception may cause a lot of unnecessary boilerplate code and are generally avoided by modern style guides.
+Nonetheless, there are many popular libraries that expose checked exception, necessitating handling by the client code.
+Unchecked exceptions are those that inherit from `RuntimeException`; they need not be declared.
 
 ## 2 Functions
 ### 2.1 Functional Interfaces as Function Types
@@ -189,19 +229,15 @@ interface.
 
 The `Consumer` interface in Listing 2.1.1 is an example of a functional interface. Note that a functional interface
 need not be annotated with `@FunctionalInterface`. However, it is a good idea to annotate custom functional interfaces
-in order to signal the intent, and to prevent accidental updates, introducing new abstract members. Such an update will
+in order to signal the intent, and to prevent accidental updates, introducing new abstract methods. Such an update will
 cause a compilation error on the interface, and not just on the corresponding lambda expressions, which may be located
 in different compilation units.
 
-## 2.? Streams and Higher Order Transformations
-Java's collection classes do not 
+### 2.2 Standard Functional Interfaces
+The package `java.util.function` contains a 
 
-It is possible to use a syntax resembling function literal in place of a method parameter:
-
-```java
-var igorsBirthdate = birthdaysMap.compute("Igor", key -> Date())
-```
-
+### 2.3 Streams and Higher Order Transformations
+Lambda expressions 
 Unlike Scala, higher order transformations like `map` or `filter` are not available directly on the concrete
 collection types. Rather, they are provided by the `java.util.stream.Stream` interface, a concrete instance of
 which is obtained by calling the `stream()` method inherited from the `Collection` interface and available

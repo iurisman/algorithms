@@ -5,4 +5,6 @@ object TourDeForceCode extends App {
   }
 
   def pi(cencored: Boolean) = if (cencored) 1000L else Math.PI
+
+  val foo: Unit = ()
 }
