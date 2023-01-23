@@ -16,12 +16,9 @@ public class TourDeForceCode {
   }
   public static void main(String[] args) {
 
-
-    class Foo {
-      String foo() throws RuntimeException {
-        throw new RuntimeException("I am a checked exception");
-      }
-    }
+    var i = Integer.valueOf(4);  // Type Integer
+    Integer j = 5;                  // Ditto
+    println(i + j);                 // 9
 
 
 //      .map(String::toUpperCase)

@@ -3,23 +3,48 @@
 #### Covers Java 17
 By Igor Urisman, January 14, 2023.
 
-* Tradeoff decision by language designers in favor of backward compatibility...
+## 0 Introduction
+Many older Scala programmers, came to Scala after clocking years of coding in Java. This experience helped us be 
+better Scala programmers —— by reusing Java standard library or understanding JVM internals. But we are a dying breed.
+For younger Scala programmers, Java is not likely to be one of the languages they used before Scala. As colleges are 
+moving away from Java as the primary teaching language, and as companies are slowing their investment in 
+new lines of Java code, Java is entering its golden years. 
 
-## 1 General Comments
-### 1.1 Types
-Java's value types exist in two incarnations. Following C++, Java offers primitive types, like `int` or `double`, but 
-in keeping with a stricter object model, it also offers wrapper classes, like `Integer` or `Double`, which offer many
-useful methods, like `decode()` for parsing the numeric value from a string. The compiler offers autoboxing facility,
-which  seamlessly converts between the two so the programmer typically doesn't have to distinguish between the two.
-Early Java programming style biased toward using primitive types, but later, since the introduction of parametric types,
-boxed types became preferred, because primitives cannot serve as type parameters.
+Nonetheless, if measured in the lines of live code, Java will remain the most ubiquitous language for many years to 
+come, and new generations of programmers will have to learn it. Scala programmers are in a favorable position to learn 
+Java quickly: they already know a lot about the JVM and are likely to have used Java's standard library. This article is
+intended to help competent Scala programmers to grasp Java's key concepts easily, by introducing them by analogy with
+the familiar Scala idioms.
 
-There's also a special keyword `void` used in place of the return type in method signatures to indicate that a method 
-returns no value. 
+Java is a single-paradigm object-oriented language. Even so, Java's type system deviates from a pure object model in a 
+number of ways, as a consequence of certain performance trade-ofs that were reasonable for the mid-1990s. Since then,
+the language has had a number of updates, like parametric types and lambda expressions, but Java's general commitment
+to backward compatibility increasingly comes at the cost of constrained opportunity for keeping abreast with modern 
+language design ideas, such as functional programming or advanced types.
 
-#### 1.1.1 Type System
-As opposed to Scala, Java is not a purely object 
-#### 1.1.2 Type Parameters (Generics)
+## 1 Type System
+### 1.1 Primitive Types
+Java's value types exist in two parallel guises. The primitive types, like `int` or `double` are the low-level higher 
+performing value types, and their object wrappers, like `Integer` and `Double`. The primitives exist beside Java's
+general type hierarchy: they have no supertypes, they cannot serve as type parameters, and they can only be operated
+on by operators because they have no methods. Conversely, the wrapper types have convenient supertypes, can serve as 
+type parameters and come with many useful methods, like `decode()` for parsing the numeric value from a string.
+
+The compiler offers autoboxing facility, seamlessly converting between primitives and object wrappers:
+```java
+var i = Integer.valueOf(4);  // Type Integer
+Integer j = 5;               // Autoboxed to type Integer
+println(i + j);              // Auto-unboxed to int
+```
+In Java, `+` is not a method on a numeric value type, but an operator applicable to numeric primitive types only.
+Therefore, for the last like to work, the compiler has to auto-unbox the two instances of `Integer` to their primitive
+counterparts.
+
+
+There's also a special keyword `void` used in place of the return type in method signatures to indicate that a method
+returns no value.
+
+### 1.2 Type Parameters (Generics)
 In Java, types which take parameters are called generic types, or, simply, generics.
 ```java
 interface Comparator<T> { ... } // Compares two values of some type T
@@ -69,7 +94,7 @@ with its direct support for variance, (and if it needed the type `Predicate`) it
    Number[] integers = new Integer[2]; // Ok due to implicit covariance
    integers[0] = 0.5;  // Compiles, but throws ArrayStoreException at run time.
 ```
-#### 1.1.3 Type Inference
+### 1.3 Type Inference
 Modern Java has limited type inference. In particular, in most local variable declarations their type can be inferred:
 ```java
 var films = new LinkedList<String>();
@@ -95,7 +120,7 @@ List.of("The Stranger", "Citizen Kane", "Touch of Evil")
     .forEach(name -> System.out.println("Film Title: " + name));  // Type of `name` is inferred.
 ```
 
-### 1.2 Classes and Inheritance
+## 2 Classes and Inheritance
 Like Scala, Java implements the single inheritance model, whereby a class can inherit from at most one class and,
 optionally, implement any number of interfaces:
 ```java
@@ -145,34 +170,6 @@ of syntactic context. A static member cannot be abstract or annotated with `@Ove
 values, which are available to static members of implementing classes.
 
 ¹ In Java, _object_ refers to the same concept as _instance_ in Scala: an instantiation of a concrete class.
-
-### 1.3 Exceptions
-Java supports exceptions with syntax similar to Scala's. They are thrown with the `throw` keyword, and can be caught
-with the `try` block:
-```java
-try {
-  var i = Integer.decode(someString);
-} catch (NumberFormatException ex) {      
-  ...
-} catch (RuntimeException ex) {
-  ...
-} finally {   
-  ...
-} 
-```
-The semantics are similar to Scala's, with one crucial difference: Java's exceptions can be both _checked_ and 
-_unchecked_. Unchecked exceptions behave like Scala exceptions. Checked exceptions must be declared in the signature
-of the method that either throws them or calls another method that declares them in its `throws` clause:
-```java
-String foo() throws Exception {
-  ...
-  throw new Exception("I am a checked exception");
-  ...
-}
-```
-Checked exception may cause a lot of unnecessary boilerplate code and are generally avoided by modern style guides.
-Nonetheless, there are many popular libraries that expose checked exception, necessitating handling by the client code.
-Unchecked exceptions are those that inherit from `RuntimeException`; they need not be declared.
 
 ## 2 Functions
 ### 2.1 Functional Interfaces as Function Types
@@ -235,36 +232,34 @@ in different compilation units.
 
 ### 2.2 Standard Functional Interfaces
 The package `java.util.function` contains an assortment of reusable functional interfaces that fit many common use
-cases. 
+cases, including:
 | Interface | Corresponding Lambda Expression |
 |-----------|---------------------------------|
-|`*Consumer` | types are suitable for lambda expressions which |
+|`*Consumer` | Functions returning `void` |
+|`*Supplier` | Nullary functions to some return type. |
+|`*Function` | Non-nullary functions to some return type. |
+|`*Predicate` | Non-nullary function returning boolean. |
+
+It is a good idea to reuse these functional interfaces rather than defining custom ones when one of these would do.
 
 ### 2.3 Streams and Higher Order Transformations
-Lambda expressions 
 Unlike Scala, higher order transformations like `map` or `filter` are not available directly on the concrete
 collection types. Rather, they are provided by the `java.util.stream.Stream` interface, a concrete instance of
-which is obtained by calling the `stream()` method inherited from the `Collection` interface and available
-on all concrete colletion types. For example, to transform a list:
+which is obtained by calling the `stream()` method, available on all concrete collection types. For example, 
+to transform a list:
 ```java
-var films = List.of("Citizen Kane", "Touch of Evil");
-var filtered = films.stream().filter(f -> f.contains("Kane"));
-System.out.println(filtered);  // java.util.stream.ReferencePipeline$2@372f7a8d
+var films = List.of("Citizen Kane", "Touch of Evil").stream().filter(f -> f.contains("Kane"));
+System.out.println(films);  // java.util.stream.ReferencePipeline$2@372f7a8d
 ```
-As a consequence of the fact that `filter()` was called on the stream instance and not on the original
-collection, as a Scala programmer would have expected, the return type of the transformation is also a stream.
-This allows chaining transformations in the style of functional programming. The downside though, is that
-oing back to the original collection type an extra call to `collect()` is needed, which terminates
-the stream by collecting all its elements in some fully instantiated data structure. For example, to go back to
-the original immutable list:
+As a consequence of the fact that `filter()` was called on the stream instance, the return type of the transformation 
+is not a collection but also a stream. This enables chaining transformations in the style of functional programming, 
+but requires an additional step terminating the stream by converting it to some collection or folding it to a single 
+value. To accomplish either, an extra call to `collect()` which takes one of a variety of collector types, generated
+by the static factory methods `java.util.stream.Collectors.*`. For example, to covert the above stream back to a list:
 
 ```java
-var films = List.of("Citizen Kane", "Touch of Evil").stream()
-  .filter(f -> f.contains("Kane"))
-  .map(String::toUpperCase)
-  .collect(Collectors.toUnmodifiableList());
-System.out.println(films); // [CITIZEN KANE]
-System.out.println(films.getClass().getName()); // java.util.ImmutableCollections$List12
+var films = List.of("Citizen Kane", "Touch of Evil").stream().filter(f -> f.contains("Kane")).collect(Collectors.toUnmodifiableList());
+System.out.println(films); // [Citizen Kane]
 ```
 Note, that the call to `collect(Collectors.toUnmodifiableList())` can be replaced with  the shortcut `toList()`,
 the idiomatic way to convert a collection to an immutable list in Scala. What may come as a surprise, however,
@@ -274,6 +269,33 @@ of no more than 2 elements. Longer lists will be converted to `ListN`.
 
 ## 3 Case Classes
 
+### 4 Exception Handling
+Java supports exceptions with syntax similar to Scala's. They are thrown with the `throw` keyword, and can be caught
+with the `try` block:
+```java
+try {
+  var i = Integer.decode(someString);
+} catch (NumberFormatException ex) {      
+  ...
+} catch (RuntimeException ex) {
+  ...
+} finally {   
+  ...
+} 
+```
+The semantics are similar to Scala's, with one crucial difference: Java's exceptions can be both _checked_ and
+_unchecked_. Unchecked exceptions behave like Scala exceptions. Checked exceptions must be declared in the signature
+of the method that either throws them or calls another method that declares them in its `throws` clause:
+```java
+String foo() throws Exception {
+  ...
+  throw new Exception("I am a checked exception");
+  ...
+}
+```
+Checked exception may cause a lot of unnecessary boilerplate code and are generally avoided by modern style guides.
+Nonetheless, there are many popular libraries that expose checked exception, necessitating handling by the client code.
+Unchecked exceptions are those that inherit from `RuntimeException`; they need not be declared.
 
 ## ? Java Standard Library
 ### ?.1 Collections
