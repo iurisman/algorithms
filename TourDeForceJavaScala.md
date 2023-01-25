@@ -40,14 +40,22 @@ In Java, `+` is not a method on a numeric value type, but an operator applicable
 Therefore, for the last like to work, the compiler has to auto-unbox the two instances of `Integer` to their primitive
 counterparts.
 
-
-There's also a special keyword `void` used in place of the return type in method signatures to indicate that a method
-returns no value.
-
-### 1.2 Type Parameters (Generics)
-In Java, types which take parameters are called generic types, or, simply, generics.
+### 1.2 `void`
+Java has a special keyword `void` used in place of the return type in method signatures which return no value. 
+In that, it is somewhat similar to Scala's `Unit`; for example, here's Java's `main` method's signature :
 ```java
-interface Comparator<T> { ... } // Compares two values of some type T
+static public void main(String[] args) { ... }
+```
+But that's where the analogy ends: `void` is not a proper type, in that it cannot be used to declare a variable or
+as a type parameter. The problem is partially alleviated by the pseudotype `Void`, which behaves more like a type 
+in that it can be used as a type parameter. It is even possible to define a method with the return type `Void`,
+but there it behaves more like Scala's `Nothing` in that `Void` is uninhabited and the only way to return a `Void`
+value from a method is to throw an exception.
+
+### 1.3 Type Parameters (Generics)
+In Java, parametric types are called generic types, or, simply, generics.
+```java
+interface Function<T,R> { ... } // A function taking one param of type T and returning type R
 ```
 
 Java does not support higher-kinded types; only types that can have values can be type parameters.
@@ -57,44 +65,29 @@ interface Functor<F<?>> {} // Syntax error
 
 A type parameter can have an upper bound:
 ```java
-class Foo<T extends Bar> { ... } // `T` must be a subtype of `Bar`. 
+class DelayQueue<E extends Delayed> { ... } // E must be a subtype of `Delayed`. 
 ```
 There is no support for lower-bounded type parameters.
 
-Java has no explicit support for variance. However, the following two facilities exist to help the programmer
-work around this limitation indirectly.
-* There is special syntax for declaring synthetic generic types that are co- or contra-variant replicas of some named
-  generic type:
+### 1.3 Type Variance
+In Scala, a type's variance can be set either at declaration or at the point of use. For example, Scala's immutable 
+list type `List[+T]` is always covariant, and the mutable type `Growable[-T]` 
+is always contravariant in their element type. In contrast, Scala's array type `Array[T]` is declared invariant, 
+leaving variance, if any, to be defined at the use-site. For example, the :
+`java.util.Stream.map()` method:
 ```java
-Foo<? extends Number> covarFoo = new Foo<Integer>(0);   // A covariant version of Foo<T>.
-Foo<? extends Number> covarFoo = new Foo<Object>(0);    // Compilation error: covariance vialation
-Foo<? super Number> contravarFoo = new Foo<Integer>(0); // Compilation error: contravariance violation
-Foo<? super Number> contravarFoo = new Foo<Object>(0);  // A contravariant version of Foo<T>.
+<R> Stream<T> map(Function<? super T, ? extends R> mapper);
 ```
-It is particularly common to see this syntax in method signatures. For example, here's the signature of the
-`java.util.Stream.filter()` method:
-```java
-interface Predicate<P> {
-  boolean test(P p);  
-}
-interface Stream<T> {
-  Stream<T> filter(Predicate<? super T> predicate); 
-}
+What this ungainly looking signature is saying is that the `map` method takes parameter of type Function, which is any
+function from the stream's current element type T (or its supertype) and returns an arbitrary new type R 
+(or its subtype). Which is equivalent to Scala's declaration
+```scala
+trait Function1[-T1, +R] { ... }
 ```
-What this ungainly looking signature is saying is that a predicate over , for instance, `Number`s can be used to filter
-a stream of `Integer`s, because `Number` is a superclass of `Integer`. Which is to say that the `filter()` method
-expects a contravariant version of the type `Predicate`. But, clearly, there can be no users of `Predicate` that would
-need it to be covariant. Variance is inherent in the type itself and is independent of the type's users. In Scala,
-with its direct support for variance, (and if it needed the type `Predicate`) it would have  been defined as simply
-`trait Predicate[-P] {...}`.
+Java's design choice of expressing the variance of a type not at declaration but at point of use in method signature
+is problematic is not just because it 
 
-* Arrays are implicitly covariant. `Foo[]` is automatically a subclass of `Bar[]` if (and only if) `Foo` is a subclass
-  of `Bar`. Variance violations are checked at run time whenever an element of an array is updated:
-```java
-   Number[] integers = new Integer[2]; // Ok due to implicit covariance
-   integers[0] = 0.5;  // Compiles, but throws ArrayStoreException at run time.
-```
-### 1.3 Type Inference
+### 1.4 Type Inference
 Modern Java has limited type inference. In particular, in most local variable declarations their type can be inferred:
 ```java
 var films = new LinkedList<String>();
@@ -120,7 +113,49 @@ List.of("The Stranger", "Citizen Kane", "Touch of Evil")
     .forEach(name -> System.out.println("Film Title: " + name));  // Type of `name` is inferred.
 ```
 
-## 2 Classes and Inheritance
+## 2 Arrays
+
+Java arrays are not objects and are manipulated with special syntax.  An array of elements of some type `T` has 
+the type `T[]`. `T` can be either an object or a primitive type. Arrays can be allocated (and, optionally, initialized)
+at declaration or, dynamically, at run time.
+```java
+int[] ints;                                      // Declared only.
+LocalDate[] dates = new LocalDate[3];            // Declared and allocated.
+BigDecimal[] fines = {BigDecimal.valueOf(20)};   // Declared, allocated and initialized.
+ints = new int[2];                               // Allocated dynamically at runtime.
+ints = new int[] {1,2};                          // Allocated and initialized dynamically at runtime.
+```
+
+Java's arrays predate generic types and the two are mostly incompatible. It is possible to allocate a generic array if 
+the parameter type is known at compilation time:
+```java
+Optional<Integer>[] maybies = new Optional[10];
+```
+But is not possible to allocate a generic array at runtime due to type erasure on the JVM. There is no way to implement
+the following method in Java without resorting to complex runtime reflection:
+```java
+/** Allocate an array of given length of arbitrary type T */
+<T> T[] alloc(int len) { ... }  // Hard and expensive
+```
+Scala solved this and many other problems related to type erasure with type tags and type classes, so this is imminently
+doable in Scala:
+```scala
+/** Allocate an array of given length of arbitrary type T */
+def alloc[T](size: Int)(implicit ct: ClassTag[T]): Array[T] = new Array[T](size)
+```
+
+Java arrays are implicitly covariant. `Fish[]` is automatically a subclass of `Pet[]` if (and only if) `Fish` is a 
+subclass of `Pet`. Variance violations are checked at run time whenever an element is updated:
+```java
+class Pet {}
+class Fish extends Pet {}
+class Snake extends Pet {}
+Pet[] pets = new Fish[10];  // Succeeds due to Java's implicit array covariance
+pets[0] = new Snake();      // Runtime ArrayStoreException
+```
+In contrast, Scala's compiler would not have allowed assignment on line 4 because Scala arrays are nonvariant.
+
+## 3 Classes and Inheritance
 Like Scala, Java implements the single inheritance model, whereby a class can inherit from at most one class and,
 optionally, implement any number of interfaces:
 ```java
