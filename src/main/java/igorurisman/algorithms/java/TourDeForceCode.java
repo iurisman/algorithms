@@ -2,6 +2,7 @@ package igorurisman.algorithms.java;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.*;
 
@@ -15,14 +16,19 @@ public class TourDeForceCode {
 
   public static void main(String[] args) {
 
-    class Pet {}
-    class Fish extends Pet {}
-    class Snake extends Pet {}
+    interface Tree<T> {
+      T value();
+      static <U> String toString(Tree<U> tree) {
+        return "";
+      }
+    }
 
-    Pet[] pets = new Fish[10];
-    pets[0] = new Snake();
-
-
+    record Leaf<T>(T value) implements Tree<T> {
+      @Override public String toString() {
+        return Tree.toString(this);
+      }
+    }
+    record Node<T>(T value, Tree<T> left, Tree<T> right) implements Tree<T> {}
   }
 }
 

@@ -303,6 +303,41 @@ two immutable list types defined therein, `List12` and `ListN`. `List12` is opti
 of no more than 2 elements. Longer lists will be converted to `ListN`.
 
 ## 3 Case Classes
+Java's case classes are called _records_:
+```java
+record Ship(String name, LocalDate launched) {}; // Like elsewhere, cannot omit an empty body
+```
+Just like case classes in Scala, Java's records get automatically generated code:
+* Public getters for all parameters of the primary constructor
+* A deep implementation of `equals()` which compares values of all parameters of the primacy constructor
+* An implementation of `hashCode` that is consistent with `equals()`.
+* A specialized implementation of `toString()` very similar to Scala's.
+
+There's no `copy()` method.
+
+A record's body need not be empty. It can contain auxiliary constructors, private final fields, and additional
+instance methods. Therefore, the state of a Java record instance is guaranteed to be immutable, as opposed to a Scala,
+where the fillowing case class is legal:
+```scala
+case class F(var f: Int = 0) {   
+  def set(newf: Int) = { f = newf; }
+}
+```
+A Java record implicitly extends the `java.lang.Record` class and is implicitly final. Consequently, as it comes to
+inheritance, a record cannot be extended, and it can only implement interfaces. The former limitation is in keeping
+with Scala's case classes, but the latter may proof restrictive. For example, consider this implementation of a
+binary tree:
+```java
+interface Tree<T> {    
+  T value();
+} 
+record Leaf<T>(T value) implements Tree<T> {} 
+record Node<T>(T value, Tree<T> left, Tree<T> right) implements Tree<T> {}
+```
+It's likely we would want to override the tree's `toString()` method and the right place to do so would be to create
+a concrete method in the interface. But that's not possible because in Java concrete methods on interfaces (called
+_default methods_) are disallowed to override methods inherited from `Object`. The only option is to override 
+`toString()` in both records.
 
 ### 4 Exception Handling
 Java supports exceptions with syntax similar to Scala's. They are thrown with the `throw` keyword, and can be caught
