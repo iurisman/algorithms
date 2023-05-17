@@ -1,6 +1,5 @@
-package igorurisman.algorithms.java.tree;
+package igorurisman.algorithms.jawa.tree;
 
-import java.util.Random;
 import static org.apache.commons.lang.RandomStringUtils.*;
 
 public class Main {

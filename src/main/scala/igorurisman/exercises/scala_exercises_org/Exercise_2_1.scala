@@ -1,5 +1,7 @@
 package igorurisman.exercises.scala_exercises_org
 
+import scala.io.Source
+
 object Exercise_2_1 extends App {
 
   /** Tail-recursive factorial */
@@ -39,5 +41,7 @@ object Exercise_2_1 extends App {
   assert(fib(5) == 5)
   assert(fib(6) == 8)
   assert(fib(7) == 13)
+
+  println((1 to 500000).map(BigInt(_)).reduce(_*_))
 }
 

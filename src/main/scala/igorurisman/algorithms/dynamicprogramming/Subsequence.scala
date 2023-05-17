@@ -72,11 +72,10 @@ object Subsequence {
     // Reconstruct the max subseq by walking back the prevIx array.
     val result = collection.mutable.ListBuffer[T]()
     var ix = maxIx
-    do {
+    while (ix >= 0) {
       seq(ix) +=: result
       ix = prevIx(ix)
-    } while (ix >= 0)
-
+    }
     result.toSeq
   }
 

@@ -1,11 +1,9 @@
-package igorurisman.algorithms.java.tree;
+package igorurisman.algorithms.jawa.tree;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.Spliterators;
 import java.util.function.*;
-import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.*;
 

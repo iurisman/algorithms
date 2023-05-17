@@ -1,12 +1,11 @@
+import java.util
+import scala.collection.mutable
+import scala.collection.immutable
+import scala.collection.immutable.HashMap
 import scala.reflect.ClassTag
 
 object TourDeForceCode extends App {
+  val map = new mutable.HashMap()
+  //map.put(1, "one")
 
-  case class Foo(var f: Int = 0) {
-    def set(value: Int) = { f = value; }
-  }
-
-  val foo = Foo()
-  foo.set(1)
-  println(foo)
 }
