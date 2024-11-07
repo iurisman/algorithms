@@ -3,13 +3,13 @@ package igorurisman.algorithms.dynamicprogramming
 /**
  *
  */
-object CoinChange extends App {
+object CoinChange {
 
   /**
    *   Compute number of ways change for the amount A monetary units can be given
    *   in coins of given denominations {d1,...,dm} monetary units.
    *
-   *   We consider the table with m + 1 rows — one more than the number of coins.
+   *   We consider the table with m + 1 rows — one more than the number of denominations.
    *   Starting with the 0th row, representing the artificial, but convenient boundary
    *   case of 0 coins, each subsequent row 0 < k <= m represents a partial coin
    *   set {d1 < d2 < ... < dk}, derived from the previous row's subset by adding the
@@ -141,6 +141,26 @@ object CoinChange extends App {
       case 0 | Inf => None
       case res => Some(res)
     }
+  }
+
+  /** Recursive implementation of ways */
+  def ways2(amount: Int, coins: Array[Int]): Long = {
+    val usableCoins = coins.filter(_ <= amount)
+    if (amount == 0) {
+      1
+    }
+    else if (usableCoins.length == 0) {
+      0
+    } else {
+      usableCoins.map(coin => ways2(amount - coin, coins)).sum
+    }
+  }
+
+  def main(args: Array[String]): Unit = {
+    val amount = 7
+    val coins = Array(1,5,10,25,50,100)
+    println(ways(amount, coins))
+    println(ways2(amount, coins))
   }
 }
 
