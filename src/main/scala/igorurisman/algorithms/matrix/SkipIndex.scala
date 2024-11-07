@@ -27,10 +27,12 @@ class SkipIndex(initLen: Int, base: Int) {
       throw new Exception (s"Bad index $ix")
     }
     _length = _length - 1
-    indices(_length) = -1  // The rightmost element is marked invalid.
+    // ith elem gets the value from its right neighbor
     for (i <- ix - base until _length) {
-      indices(i) = indices(i) + 1
+      indices(i) = indices(i+1)
     }
+    // The rightmost element is marked invalid.
+    indices(_length) = -1
   }
 
   override def toString: String = {

@@ -23,13 +23,6 @@ class Matrix private (private val elems: Array[Array[Double]])
 
   def apply(row: Int, col: Int): Double = {
     val r = rowIndex(row)
-    if (r > elems(0).length) {
-      throw new Exception (s"Row index $r OOB")
-    }
-    val c = columnIndex(col)
-    if (c > elems.length) {
-      throw new Exception (s"Column index $c OOB")
-    }
     elems(rowIndex(row)-1)(columnIndex(col)-1)
   }
 
@@ -41,28 +34,36 @@ class Matrix private (private val elems: Array[Array[Double]])
     result
   }
 
-  def determinant(): Double = {
+  def det: Double = {
     if (!isSquare) {
       throw new Exception("Only square matrices can have determinants")
     }
-    println(s"**************** $rows x $columns ${System.identityHashCode(this)}")
     if (rows == 1) {
-      this (1, 1)
+      this(1, 1)
     }
     else {
       var result = 0.0
       for (j <- 1 to columns) {
-        println(j)
-        result = result + pow(-1, 1 + j) * this(1, j) * drop(1, j).determinant()
+        val detMinor =  {
+          val minor = drop(1, j)
+          minor.det
+        }
+        result = result + pow(-1, j+1) * this(1, j) * detMinor
       }
       result
     }
   }
 
   override def toString: String = {
-    elems.foldLeft ("") {
-      (acc, row) => acc + row.foldLeft("")(_ + " " + _) + "\n"
+    val result = new StringBuffer()
+    for (i <- 1 to rowIndex.length) {
+      if (i > 1) result.append("\n")
+      for (j <- 1 to columnIndex.length) {
+        if (j > 1) result.append(",")
+        result.append(this(i,j))
+      }
     }
+    result.toString
   }
 }
 
@@ -79,5 +80,10 @@ object Matrix {
   }
   def fill(dimension: Int)(f: (Int, Int) => Double): Matrix = {
     fill(dimension, dimension)(f)
+  }
+
+  def main(args: Array[String]): Unit = {
+    val m = Matrix.fill(12)((i, j) => Random.nextInt(100) - 50)
+    println(m.det)
   }
 }

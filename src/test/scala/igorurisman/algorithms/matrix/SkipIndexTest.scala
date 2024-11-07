@@ -16,7 +16,7 @@ class SkipIndexTest extends AnyWordSpec with Matchers {
       six.toString mustBe "0, 1, 2, 4, -1"
       six.length mustBe 4
       six.skip(2)
-      six.toString mustBe "0, 1, 3, -1, -1"
+      six.toString mustBe "0, 1, 4, -1, -1"
       six.length mustBe 3
       six.skip(2)
       six.toString mustBe "0, 1, -1, -1, -1"
@@ -54,5 +54,16 @@ class SkipIndexTest extends AnyWordSpec with Matchers {
       six.length mustBe 2
       six.toString mustBe "2, 3, -1"
     }
+
+    "do well with offmultiple skips" in {
+      val six = new SkipIndex(3, 1)
+      six.skip(2)
+      six.length mustBe 2
+      six.toString mustBe "1, 3, -1"
+      six.skip(1)
+      six.length mustBe 1
+      six.toString mustBe "3, -1, -1"
+    }
+
   }
 }
